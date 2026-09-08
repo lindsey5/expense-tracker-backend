@@ -12,6 +12,43 @@ datasource db {
   provider = "postgresql"
 }
 
+enum ExpenseCategory {
+  FOOD
+  TRANSPORTATION
+  BILLS
+  SHOPPING
+  ENTERTAINMENT
+  HEALTHCARE
+  EDUCATION
+  TRAVEL
+  HOUSING
+  PERSONAL_CARE
+  SUBSCRIPTIONS
+  GROCERIES
+  GIFTS_DONATIONS
+  INSURANCE
+  OTHER
+}
+
+enum IncomeCategory {
+  SALARY
+  BUSINESS
+  FREELANCE
+  INVESTMENT
+  ALLOWANCE
+  GIFT
+  BONUS
+  OTHER
+}
+
+enum WalletType {
+  CASH
+  BANK
+  E_WALLET
+  CREDIT_CARD
+  OTHER
+}
+
 model User {
   id         String   @id @default(cuid())
   firstName  String
@@ -19,12 +56,83 @@ model User {
   email      String   @unique
   password   String?
   googleId   String?  @unique
+
   isVerified Boolean  @default(false)
   avatar     String?
 
-  verificationCode        String?
+  verificationCode          String?
   verificationCodeExpiresAt DateTime?
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  wallets  Wallet[]
+  expenses Expense[]
+  incomes  Income[]
+}
+
+model Wallet {
+  id      String @id @default(cuid())
+  userId  String
+
+  name    String
+  type    WalletType
+  balance Decimal @default(0) @db.Decimal(12, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expenses Expense[]
+  incomes  Income[]
+
+  @@index([userId])
+  @@index([type])
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  userId      String
+  walletId    String
+
+  amount      Decimal         @db.Decimal(12, 2)
+  description String?
+  category    ExpenseCategory
+  expenseDate DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([expenseDate])
+  @@index([category])
+}
+
+model Income {
+  id          String         @id @default(cuid())
+  userId      String
+  walletId    String
+
+  amount      Decimal        @db.Decimal(12, 2)
+  description String?
+  category    IncomeCategory
+  incomeDate  DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([incomeDate])
+  @@index([category])
 }

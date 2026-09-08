@@ -3,7 +3,6 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { GoogleUserDto } from './dto/google-login.dto';
 import { LoginUserDTO, SignupUserDTO } from './dto/auth.dto';
-import { createHash, randomBytes } from 'crypto';
 import { comparePassword, hashPassword } from 'src/utils/auth';
 import { EmailService } from 'src/email/email.service';
 

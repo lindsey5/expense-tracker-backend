@@ -5,28 +5,36 @@ import {
   Param,
   Post,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { ApiBody, ApiOkResponse } from '@nestjs/swagger';
 import { AuthResponseDto, LoginUserDTO, SignupResponse, SignupUserDTO, VerifyDTO, VerifyResponse } from './dto/auth.dto';
+import { type Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly configService: ConfigService
   ) {}
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  googleLogin() {}
+  googleLogin(@Req() req: any) {}
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   @ApiOkResponse({ type: AuthResponseDto })
-  async googleCallback(@Req() req: any) {
-    return this.authService.googleLogin(req.user);
+  async googleCallback(@Req() req: any, @Res() res: Response) {
+    const result = await this.authService.googleLogin(req.user); 
+    const redirectUri = this.configService.getOrThrow<string>("GOOGLE_REDIRECT_URI"); 
+    const params = new URLSearchParams({ accessToken: result.accessToken, user: JSON.stringify(result.user)});
+
+    return res.redirect( `${redirectUri}?${params.toString()}`, );
   }
 
   @Post('signup')
