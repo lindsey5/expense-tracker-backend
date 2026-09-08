@@ -21,6 +21,10 @@ model User {
   googleId   String?  @unique
   isVerified Boolean  @default(false)
   avatar     String?
+
+  verificationCode        String?
+  verificationCodeExpiresAt DateTime?
+
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
