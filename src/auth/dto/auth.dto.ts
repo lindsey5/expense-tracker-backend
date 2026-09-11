@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-    isEmail,
     IsEmail,
     IsNotEmpty,
     IsString,
@@ -39,10 +38,7 @@ export class SignupResponse {
 
 export class UserResponseDto {
     @ApiProperty()
-    id: number = 0;
-
-    @ApiProperty()
-    googleId: string = '';
+    id: string = '';
 
     @ApiProperty()
     email: string = '';
@@ -52,9 +48,6 @@ export class UserResponseDto {
 
     @ApiProperty()
     lastName: string = '';
-
-    @ApiProperty({ type: String, nullable: true })
-    avatar: string | null = null;
 
     @ApiProperty()
     isVerified: boolean = false;
@@ -74,9 +67,24 @@ export class VerifyDTO {
     @IsNotEmpty() 
     @Length(6, 6)
     verificationCode!: string;
+
+    @ApiProperty()
+    @IsEmail()
+    email!: string;
 }
 
 export class VerifyResponse {
+    @ApiProperty()
+    message!: string
+}
+
+export class ResendDTO {
+    @ApiProperty()
+    @IsEmail()
+    email!: string
+}
+
+export class ResendResponse {
     @ApiProperty()
     message!: string
 }

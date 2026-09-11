@@ -4,7 +4,6 @@ import { JwtModule } from '@nestjs/jwt';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { GoogleStrategy } from './strategies/google.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -21,14 +20,14 @@ import { EmailService } from 'src/email/email.service';
         global: true,
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '1d'),
+          expiresIn: configService.get('JWT_EXPIRES_IN', '7d'),
         },
       }),
     }),
   ],
 
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, JwtStrategy, PrismaService, EmailService],
+  providers: [AuthService, JwtStrategy, PrismaService, EmailService],
   exports: [AuthService],
 })
 export class AuthModule {}
