@@ -89,7 +89,7 @@ model Transaction {
   type        TransactionType
   category    TransactionCategory
   amount      Decimal            @db.Decimal(12, 2)
-  description String?
+  title       String
   date        DateTime
 
   createdAt DateTime @default(now())

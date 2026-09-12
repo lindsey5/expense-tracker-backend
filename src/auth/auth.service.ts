@@ -10,23 +10,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LoginUserDTO, SignupUserDTO } from './dto/auth.dto';
 import { comparePassword, hashPassword } from 'src/utils/auth';
 import { EmailService } from 'src/email/email.service';
-import { OAuth2Client } from 'google-auth-library';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
-  private readonly googleClient: OAuth2Client;
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
-    private readonly configService: ConfigService,
-  ) {
-    this.googleClient = new OAuth2Client(
-      configService.get('GOOGLE_CLIENT_ID'),
-    );
-  }
+  ) {}
 
   async signup(signupDTO: SignupUserDTO) {
     const isExisting = await this.prisma.user.findUnique({
