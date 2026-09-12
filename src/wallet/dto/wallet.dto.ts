@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { WalletType } from 'generated/prisma/enums';
 
-export class WalletResponseDto {
+export class WalletDto {
     @ApiProperty()
     id!: string;
 
@@ -26,3 +26,15 @@ export class WalletResponseDto {
     @ApiProperty({ type: Date })
     updatedAt!: Date;
 }
+
+export class WalletResponseDto {
+    @ApiProperty({ type: WalletDto })
+    wallet!: WalletDto;
+    
+    @ApiProperty()
+    message!: string;
+}
+
+export class CreateWalletResponseDto extends WalletResponseDto {}
+
+export class UpdateWalletResponseDto extends WalletResponseDto {}

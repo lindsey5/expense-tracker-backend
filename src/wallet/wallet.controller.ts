@@ -1,15 +1,24 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { CreateWalletDto } from './dto/create-wallet.dto';
 import { UpdateWalletDto } from './dto/update-wallet.dto';
+import { JwtAuthGuard } from 'src/auth/guards/JwtAuthGuard';
+import { CurrentUserId } from 'src/common/decorator/current-user.decorator';
+import { ApiOkResponse } from '@nestjs/swagger';
+import { CreateWalletResponseDto } from './dto/wallet.dto';
 
 @Controller('wallet')
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 
   @Post()
-  create(@Body() createWalletDto: CreateWalletDto) {
-    return this.walletService.create(createWalletDto);
+  @UseGuards(JwtAuthGuard)
+  @ApiOkResponse({ type: CreateWalletResponseDto })
+  create(
+    @CurrentUserId() userId: string,
+    @Body() createWalletDto: CreateWalletDto
+  ) {
+    return this.walletService.create(userId, createWalletDto);
   }
 
   @Get()
