@@ -25,7 +25,7 @@ export class TransactionService {
   }
 
   async findAll(userId: string, getTransactionsDto: GetTransactionsDto) {
-    const { category, limit, month, page, type, year } = getTransactionsDto;
+    const { category, limit, month, page, type, year, search } = getTransactionsDto;
     const skip = (page - 1) * limit;
 
     const where : any = { userId };
@@ -36,6 +36,27 @@ export class TransactionService {
 
     if(category) {
       where.category = category;
+    }
+
+    if (search) {
+      where.tite = {
+        contains: search,
+        mode: 'insensitive',
+      },
+      where.OR = [
+        {
+          category: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          title: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      ];
     }
 
     const startDate = new Date(year, month - 1, 1);

@@ -51,7 +51,12 @@ export class GetTransactionsDto {
     @Min(2000)
     @Max(2100)
     year: number = new Date().getFullYear();
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    search?: string;
 }
+
 export class GetTransactionsResponseDto  {
     @ApiProperty({ type: [TransactionResponseDto] })
     transactions!: TransactionResponseDto[];

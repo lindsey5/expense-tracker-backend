@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { EmailService } from './email/email.service';
 import { TransactionModule } from './transaction/transaction.module';
 import { WalletModule } from './wallet/wallet.module';
+import { JwtStrategy } from './auth/strategies/jwt.strategy';
 
 @Module({
   imports: [
@@ -17,6 +18,6 @@ import { WalletModule } from './wallet/wallet.module';
     AuthModule, TransactionModule, WalletModule,
   ],
   controllers: [AppController],
-  providers: [AppService, EmailService],
+  providers: [AppService, EmailService, JwtStrategy],
 })
 export class AppModule {}
