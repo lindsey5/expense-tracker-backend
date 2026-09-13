@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { WalletType } from 'generated/prisma/enums';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class WalletDto {
     @ApiProperty()
@@ -11,13 +11,13 @@ export class WalletDto {
     @ApiProperty()
     name!: string;
 
-    @ApiProperty({ enum: WalletType })
+    @ApiProperty({
+        enum: WalletType,
+        example: WalletType.E_WALLET,
+    })
     type!: WalletType;
 
-    @ApiProperty({
-        example: 1500.5,
-        description: 'Wallet balance',
-    })
+    @ApiProperty()
     balance!: number;
 
     @ApiProperty({ type: Date })
@@ -27,14 +27,10 @@ export class WalletDto {
     updatedAt!: Date;
 }
 
-export class WalletResponseDto {
+export class WalletResponseWrapperDto {
     @ApiProperty({ type: WalletDto })
     wallet!: WalletDto;
-    
+
     @ApiProperty()
     message!: string;
 }
-
-export class CreateWalletResponseDto extends WalletResponseDto {}
-
-export class UpdateWalletResponseDto extends WalletResponseDto {}

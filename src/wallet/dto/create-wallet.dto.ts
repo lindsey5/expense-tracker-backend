@@ -9,6 +9,7 @@ import {
     Min,
 } from 'class-validator';
 import { WalletType } from 'generated/prisma/enums';
+import { WalletResponseWrapperDto } from './wallet.dto';
 
 export class CreateWalletDto {
     @ApiProperty()
@@ -24,13 +25,11 @@ export class CreateWalletDto {
     @IsEnum(WalletType)
     type!: WalletType;
 
-    @ApiPropertyOptional({
-        example: 1000,
-        minimum: 0,
-        description: 'Initial wallet balance',
-    })
+    @ApiPropertyOptional()
     @IsOptional()
     @IsNumber({ maxDecimalPlaces: 2 })
     @Min(0)
     balance?: number;
 }
+
+export class CreateWalletResponseDto extends WalletResponseWrapperDto {}
