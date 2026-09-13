@@ -1,9 +1,8 @@
-
 export function verificationEmailTemplate(
-    firstName: string,
-    verificationCode: string,
+  firstName: string,
+  verificationCode: string,
 ): string {
-    return `
+  return `
     <!DOCTYPE html>
     <html lang="en">
     <head>

@@ -1,4 +1,12 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserLookupDto, UserLookupResponse } from './dto/get-user.dto';
 import { ApiOkResponse } from '@nestjs/swagger';

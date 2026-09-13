@@ -62,7 +62,8 @@ export class AuthService {
     );
 
     return {
-      message: 'Registration successful. Please check your email to verify your account.',
+      message:
+        'Registration successful. Please check your email to verify your account.',
       id: user.id,
     };
   }
@@ -70,7 +71,8 @@ export class AuthService {
   async resend(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) throw new NotFoundException('User not found.');
-    if (user.isVerified) throw new ConflictException('Email is already registered');
+    if (user.isVerified)
+      throw new ConflictException('Email is already registered');
 
     const verificationCode = Math.floor(
       100000 + Math.random() * 900000,
@@ -89,7 +91,8 @@ export class AuthService {
     );
 
     return {
-      message: 'Registration successful. Please check your email to verify your account.',
+      message:
+        'Registration successful. Please check your email to verify your account.',
       id: user.id,
     };
   }
@@ -138,7 +141,9 @@ export class AuthService {
       throw new UnauthorizedException('This account uses Google login.');
     }
     if (!user.isVerified) {
-      throw new UnauthorizedException('Please verify your email before logging in.');
+      throw new UnauthorizedException(
+        'Please verify your email before logging in.',
+      );
     }
 
     const isPasswordValid = await comparePassword(

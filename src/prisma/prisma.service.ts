@@ -5,10 +5,10 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class PrismaService extends PrismaClient {
-    constructor(private configService: ConfigService) {
-        const adapter = new PrismaPg({
-            connectionString: configService.get('DATABASE_URL'),
-        });
-        super({ adapter });
-    }
+  constructor(private configService: ConfigService) {
+    const adapter = new PrismaPg({
+      connectionString: configService.get('DATABASE_URL'),
+    });
+    super({ adapter });
+  }
 }

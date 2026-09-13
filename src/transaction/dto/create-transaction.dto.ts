@@ -10,28 +10,28 @@ import {
 import { TransactionCategory, TransactionType } from 'generated/prisma/enums';
 
 export class CreateTransactionDto {
-    @ApiProperty()
-    @IsString()
-    walletId!: string;
+  @ApiProperty()
+  @IsString()
+  walletId!: string;
 
-    @ApiProperty({ enum: TransactionType, example: TransactionType.EXPENSE })
-    @IsEnum(TransactionType)
-    type!: TransactionType;
+  @ApiProperty({ enum: TransactionType, example: TransactionType.EXPENSE })
+  @IsEnum(TransactionType)
+  type!: TransactionType;
 
-    @ApiProperty({ enum: TransactionCategory, example: TransactionCategory.FOOD })
-    @IsEnum(TransactionCategory)
-    category!: TransactionCategory;
+  @ApiProperty({ enum: TransactionCategory, example: TransactionCategory.FOOD })
+  @IsEnum(TransactionCategory)
+  category!: TransactionCategory;
 
-    @ApiProperty({})
-    @IsNumber({ maxDecimalPlaces: 2 })
-    @Min(0.01)
-    amount!: number;
+  @ApiProperty({})
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  amount!: number;
 
-    @ApiProperty({})
-    @IsString()
-    title!: string;
+  @ApiProperty({})
+  @IsString()
+  title!: string;
 
-    @ApiProperty({})
-    @IsDateString()
-    date!: string;
+  @ApiProperty({})
+  @IsDateString()
+  date!: string;
 }

@@ -31,7 +31,7 @@ export class TransactionResponseDto {
   updatedAt!: Date;
 
   @ApiProperty({ type: WalletDto })
-  wallet!: WalletDto
+  wallet!: WalletDto;
 }
 
 export class CreateUpdateTransactionResponse {
@@ -40,4 +40,15 @@ export class CreateUpdateTransactionResponse {
 
   @ApiProperty({ type: TransactionResponseDto })
   transaction!: TransactionResponseDto;
+}
+
+export class GetTransactionMonths {
+  @ApiProperty()
+  month!: number;
+
+  @ApiProperty()
+  year!: number;
+
+  @ApiProperty()
+  monthName!: string;
 }

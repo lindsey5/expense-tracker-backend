@@ -14,8 +14,10 @@ import { JwtStrategy } from './auth/strategies/jwt.strategy';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    UserModule, 
-    AuthModule, TransactionModule, WalletModule,
+    UserModule,
+    AuthModule,
+    TransactionModule,
+    WalletModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService, JwtStrategy],

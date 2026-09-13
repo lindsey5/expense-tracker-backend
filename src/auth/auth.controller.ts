@@ -8,13 +8,20 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiBody, ApiOkResponse } from '@nestjs/swagger';
-import { AuthResponseDto, LoginUserDTO, ResendDTO, ResendResponse, SignupResponse, SignupUserDTO, VerifyDTO, VerifyResponse } from './dto/auth.dto';
+import {
+  AuthResponseDto,
+  LoginUserDTO,
+  ResendDTO,
+  ResendResponse,
+  SignupResponse,
+  SignupUserDTO,
+  VerifyDTO,
+  VerifyResponse,
+} from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post('signup')
   @ApiBody({ type: SignupUserDTO })
@@ -28,7 +35,10 @@ export class AuthController {
   @ApiBody({ type: VerifyDTO })
   @ApiOkResponse({ type: VerifyResponse })
   async verifyUser(@Body() verifyDTO: VerifyDTO) {
-    return this.authService.verifyUser(verifyDTO.email, verifyDTO.verificationCode);
+    return this.authService.verifyUser(
+      verifyDTO.email,
+      verifyDTO.verificationCode,
+    );
   }
 
   @Post('resend')

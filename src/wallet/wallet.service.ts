@@ -1,51 +1,53 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { UpdateWalletDto } from './dto/update-wallet.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateWalletDto } from './dto/create-wallet.dto';
 
 @Injectable()
 export class WalletService {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
-  
+  constructor(private readonly prisma: PrismaService) {}
+
   async create(userId: string, createWalletDto: CreateWalletDto) {
     const isExisting = await this.prisma.wallet.findFirst({
       where: {
-        name: createWalletDto.name
-      }
-    })
+        name: createWalletDto.name,
+      },
+    });
 
-    if(isExisting) {
-      throw new ConflictException("Wallet name already exists.");
+    if (isExisting) {
+      throw new ConflictException('Wallet name already exists.');
     }
 
     const wallet = await this.prisma.wallet.create({
       data: {
         userId,
-        ...createWalletDto
-      }
-    })
+        ...createWalletDto,
+      },
+    });
 
     return {
       wallet,
-      message: "Wallet successfully added"
-    }
+      message: 'Wallet successfully added',
+    };
   }
 
   async findAll(userId: string) {
     const wallets = await this.prisma.wallet.findMany({
       where: {
-        userId
-      }
-    })
-    
+        userId,
+      },
+    });
+
     return { wallets };
   }
 
   async getTotalBalance(userId: string) {
     const [totalWallets, result] = await Promise.all([
-      this.prisma.wallet.count({ where: { userId }}),
+      this.prisma.wallet.count({ where: { userId } }),
       this.prisma.wallet.aggregate({
         where: { userId },
         _sum: {
@@ -63,23 +65,23 @@ export class WalletService {
   }
 
   async update(id: string, updateWalletDto: UpdateWalletDto) {
-      const wallet = await this.prisma.wallet.findUnique({
-          where: { id },
-      });
+    const wallet = await this.prisma.wallet.findUnique({
+      where: { id },
+    });
 
-      if (!wallet) {
-          throw new NotFoundException('Wallet not found');
-      }
+    if (!wallet) {
+      throw new NotFoundException('Wallet not found');
+    }
 
-      const updatedWallet = await this.prisma.wallet.update({
-          where: { id },
-          data: updateWalletDto,
-      });
+    const updatedWallet = await this.prisma.wallet.update({
+      where: { id },
+      data: updateWalletDto,
+    });
 
-      return {
-          wallet: updatedWallet,
-          message: 'Wallet updated successfully',
-      };
+    return {
+      wallet: updatedWallet,
+      message: 'Wallet updated successfully',
+    };
   }
 
   remove(id: number) {

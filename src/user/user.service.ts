@@ -3,23 +3,21 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class UserService {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async userLookup(email: string) {
     const user = await this.prisma.user.findUnique({
       where: {
-        email
-      }
-    })
+        email,
+      },
+    });
 
-    if(!user){
-     throw new NotFoundException("User not found");
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
 
     return {
-      message: "This email is already registered."
-    }
+      message: 'This email is already registered.',
+    };
   }
 }

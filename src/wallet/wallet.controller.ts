@@ -1,7 +1,19 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { CreateWalletDto } from './dto/create-wallet.dto';
-import { UpdateWalletDto, UpdateWalletResponseDto } from './dto/update-wallet.dto';
+import {
+  UpdateWalletDto,
+  UpdateWalletResponseDto,
+} from './dto/update-wallet.dto';
 import { JwtAuthGuard } from 'src/auth/guards/JwtAuthGuard';
 import { CurrentUserId } from 'src/common/decorator/current-user.decorator';
 import { ApiOkResponse } from '@nestjs/swagger';
@@ -17,7 +29,7 @@ export class WalletController {
   @ApiOkResponse({ type: CreateWalletResponseDto })
   create(
     @CurrentUserId() userId: string,
-    @Body() createWalletDto: CreateWalletDto
+    @Body() createWalletDto: CreateWalletDto,
   ) {
     return this.walletService.create(userId, createWalletDto);
   }
@@ -29,7 +41,7 @@ export class WalletController {
     return this.walletService.findAll(userId);
   }
 
-  @Get("/total-balance")
+  @Get('total-balance')
   @UseGuards(JwtAuthGuard)
   @ApiOkResponse({ type: GetTotalBalance })
   getTotalBalance(@CurrentUserId() userId: string) {
