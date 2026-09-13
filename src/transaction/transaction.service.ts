@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetTransactionsDto } from './dto/get-transaction.dto';
@@ -8,11 +8,45 @@ export class TransactionService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createTransactionDto: CreateTransactionDto, id: string) {
-    const transaction = await this.prisma.transaction.create({
-      data: {
-        ...createTransactionDto,
+    const { date, ...data } = createTransactionDto;
+
+    const wallet = await this.prisma.wallet.findUnique({
+      where: {
+        id: data.walletId,
         userId: id,
       },
+    });
+
+    if (!wallet) {
+      throw new NotFoundException('Wallet not found');
+    }
+
+    const transaction = await this.prisma.$transaction(async (tx) => {
+      const transaction = await tx.transaction.create({
+        data: {
+          ...data,
+          date: new Date(`${date}T00:00:00.000Z`),
+          userId: id,
+        },
+        include: {
+          wallet: true,
+        },
+      });
+
+      const balanceChange = data.type === 'INCOME' ? data.amount : -data.amount;
+
+      await tx.wallet.update({
+        where: {
+          id: wallet.id,
+        },
+        data: {
+          balance: {
+            increment: balanceChange,
+          },
+        },
+      });
+
+      return transaction;
     });
 
     return {
@@ -22,8 +56,7 @@ export class TransactionService {
   }
 
   async findAll(userId: string, getTransactionsDto: GetTransactionsDto) {
-    const { category, limit, month, page, type, year, search } =
-      getTransactionsDto;
+    const { category, limit, month, page, type, year, search } = getTransactionsDto;
 
     const skip = (page - 1) * limit;
 
@@ -44,28 +77,20 @@ export class TransactionService {
       };
     }
 
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 1);
-
-    const dateWhere = {
-      ...where,
-      date: {
-        gte: startDate,
-        lt: endDate,
-      },
-    };
-
     const [transactions, total] = await Promise.all([
       this.prisma.transaction.findMany({
-        where: dateWhere,
+        where,
         skip,
         take: limit,
         orderBy: {
-          date: 'desc',
+          createdAt: 'desc',
+        },
+        include: {
+          wallet: true,
         },
       }),
       this.prisma.transaction.count({
-        where: dateWhere,
+        where,
       }),
     ]);
 
@@ -110,4 +135,5 @@ export class TransactionService {
 
     return months;
   }
+
 }

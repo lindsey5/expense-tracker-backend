@@ -52,6 +52,7 @@ export class TransactionSummaryService {
     return {
       amount,
       change: Number(change.toFixed(1)),
+      hasPreviousMonth: previousAmount > 0
     };
   }
 

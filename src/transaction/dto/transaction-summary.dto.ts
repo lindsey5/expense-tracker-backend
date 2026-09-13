@@ -6,6 +6,9 @@ export class GetTransactionSummaryResponseDto {
 
   @ApiProperty()
   change!: number;
+
+  @ApiProperty()
+  hasPreviousAmount!: boolean;
 }
 
 export class GetExpensesResponseDto extends GetTransactionSummaryResponseDto {}
