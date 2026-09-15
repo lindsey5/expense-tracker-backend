@@ -8,16 +8,15 @@ import {
   Delete,
   UseGuards,
 } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { WalletService } from './wallet.service';
-import { CreateWalletDto } from './dto/create-wallet.dto';
+import { CreateWalletDto, CreateWalletResponseDto } from './dto/create-wallet.dto';
 import {
   UpdateWalletDto,
   UpdateWalletResponseDto,
 } from './dto/update-wallet.dto';
 import { JwtAuthGuard } from 'src/auth/guards/JwtAuthGuard';
 import { CurrentUserId } from 'src/common/decorator/current-user.decorator';
-import { ApiOkResponse } from '@nestjs/swagger';
-import { CreateWalletResponseDto } from './dto/create-wallet.dto';
 import { GetTotalBalance, GetWalletsResponseDto } from './dto/get-wallet.dto';
 
 @Controller('wallet')
@@ -26,6 +25,7 @@ export class WalletController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'create_wallet' })
   @ApiOkResponse({ type: CreateWalletResponseDto })
   create(
     @CurrentUserId() userId: string,
@@ -36,6 +36,7 @@ export class WalletController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'list_wallets' })
   @ApiOkResponse({ type: GetWalletsResponseDto })
   findAll(@CurrentUserId() userId: string) {
     return this.walletService.findAll(userId);
@@ -43,6 +44,7 @@ export class WalletController {
 
   @Get('total-balance')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'get_total_balance' })
   @ApiOkResponse({ type: GetTotalBalance })
   getTotalBalance(@CurrentUserId() userId: string) {
     return this.walletService.getTotalBalance(userId);
@@ -50,12 +52,18 @@ export class WalletController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'update_wallet' })
   @ApiOkResponse({ type: UpdateWalletResponseDto })
-  update(@Param('id') id: string, @Body() updateWalletDto: UpdateWalletDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateWalletDto: UpdateWalletDto,
+  ) {
     return this.walletService.update(id, updateWalletDto);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'delete_wallet' })
   remove(@Param('id') id: string) {
     return this.walletService.remove(+id);
   }

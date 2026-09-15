@@ -3,11 +3,14 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
-  Param,
   Post,
 } from '@nestjs/common';
+import {
+  ApiBody,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { ApiBody, ApiOkResponse } from '@nestjs/swagger';
 import {
   AuthResponseDto,
   LoginUserDTO,
@@ -24,6 +27,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('signup')
+  @ApiOperation({ operationId: 'signup' })
   @ApiBody({ type: SignupUserDTO })
   @ApiOkResponse({ type: SignupResponse })
   async signup(@Body() signupDTO: SignupUserDTO) {
@@ -32,6 +36,7 @@ export class AuthController {
 
   @Post('verify')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ operationId: 'verify_email' })
   @ApiBody({ type: VerifyDTO })
   @ApiOkResponse({ type: VerifyResponse })
   async verifyUser(@Body() verifyDTO: VerifyDTO) {
@@ -43,6 +48,7 @@ export class AuthController {
 
   @Post('resend')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ operationId: 'resend_verification' })
   @ApiBody({ type: ResendDTO })
   @ApiOkResponse({ type: ResendResponse })
   async resend(@Body() resendDTO: ResendDTO) {
@@ -51,6 +57,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ operationId: 'login' })
   @ApiBody({ type: LoginUserDTO })
   @ApiOkResponse({ type: AuthResponseDto })
   async login(@Body() loginUserDTO: LoginUserDTO) {
