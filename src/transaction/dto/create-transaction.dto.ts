@@ -1,9 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsDateString,
   IsEnum,
   IsNumber,
-  IsOptional,
   IsString,
   Min,
 } from 'class-validator';
@@ -22,16 +20,16 @@ export class CreateTransactionDto {
   @IsEnum(TransactionCategory)
   category!: TransactionCategory;
 
-  @ApiProperty({})
+  @ApiProperty()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
   amount!: number;
 
-  @ApiProperty({})
+  @ApiProperty()
   @IsString()
   title!: string;
 
-  @ApiProperty({})
-  @IsDateString()
-  date!: string;
+  @ApiProperty()
+  date!: Date;
+  
 }
