@@ -37,12 +37,21 @@ export class BudgetController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBudgetDto: UpdateBudgetDto) {
-    return this.budgetService.update(+id, updateBudgetDto);
+  @UseGuards(JwtAuthGuard)
+  update(
+    @Param('id') id: string, 
+    @Body() updateBudgetDto: UpdateBudgetDto,
+    @CurrentUserId() userId: string,
+  ) {
+    return this.budgetService.update(id, userId, updateBudgetDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.budgetService.remove(+id);
+  @UseGuards(JwtAuthGuard)
+  remove(
+    @CurrentUserId() userId: string,
+    @Param('id') id: string
+  ) {
+    return this.budgetService.remove(id, userId);
   }
 }
