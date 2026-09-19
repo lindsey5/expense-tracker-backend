@@ -90,7 +90,9 @@ describe('TransactionService', () => {
       };
 
       mockPrismaService.wallet.findUnique.mockResolvedValue(wallet);
-      mockPrismaService.transaction.create.mockResolvedValue(createdTransaction);
+      mockPrismaService.transaction.create.mockResolvedValue(
+        createdTransaction,
+      );
       mockPrismaService.wallet.update.mockResolvedValue({
         ...wallet,
         balance: 15000,
@@ -152,7 +154,9 @@ describe('TransactionService', () => {
       };
 
       mockPrismaService.wallet.findUnique.mockResolvedValue(wallet);
-      mockPrismaService.transaction.create.mockResolvedValue(createdTransaction);
+      mockPrismaService.transaction.create.mockResolvedValue(
+        createdTransaction,
+      );
       mockPrismaService.wallet.update.mockResolvedValue({
         ...wallet,
         balance: 9000,

@@ -49,7 +49,6 @@ export class TransactionService {
         },
       });
 
-
       const balanceChange = data.type === 'INCOME' ? data.amount : -data.amount;
 
       await tx.wallet.update({
@@ -73,7 +72,8 @@ export class TransactionService {
   }
 
   async findAll(userId: string, getTransactionsDto: GetTransactionsDto) {
-    const { category, limit, month, page, type, year, search } = getTransactionsDto;
+    const { category, limit, month, page, type, year, search } =
+      getTransactionsDto;
 
     const skip = (page - 1) * limit;
 
@@ -163,5 +163,4 @@ export class TransactionService {
 
     return months;
   }
-
 }

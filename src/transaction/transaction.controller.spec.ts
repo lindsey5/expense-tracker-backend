@@ -58,10 +58,7 @@ describe('TransactionController', () => {
     mockTransactionService.create.mockResolvedValue(response);
 
     await expect(controller.create('user-123', dto)).resolves.toEqual(response);
-    expect(mockTransactionService.create).toHaveBeenCalledWith(
-      dto,
-      'user-123',
-    );
+    expect(mockTransactionService.create).toHaveBeenCalledWith(dto, 'user-123');
   });
 
   it('delegates list requests to TransactionService', async () => {

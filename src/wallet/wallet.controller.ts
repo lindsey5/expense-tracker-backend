@@ -10,7 +10,10 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { WalletService } from './wallet.service';
-import { CreateWalletDto, CreateWalletResponseDto } from './dto/create-wallet.dto';
+import {
+  CreateWalletDto,
+  CreateWalletResponseDto,
+} from './dto/create-wallet.dto';
 import {
   UpdateWalletDto,
   UpdateWalletResponseDto,
@@ -54,10 +57,7 @@ export class WalletController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'update_wallet' })
   @ApiOkResponse({ type: UpdateWalletResponseDto })
-  update(
-    @Param('id') id: string,
-    @Body() updateWalletDto: UpdateWalletDto,
-  ) {
+  update(@Param('id') id: string, @Body() updateWalletDto: UpdateWalletDto) {
     return this.walletService.update(id, updateWalletDto);
   }
 

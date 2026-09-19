@@ -27,7 +27,8 @@ export class AuthService {
       throw new ConflictException('Email is already registered');
     }
 
-    const { verificationCode, verificationCodeExpiresAt } = this.emailService.generateVerificationCode();
+    const { verificationCode, verificationCodeExpiresAt } =
+      this.emailService.generateVerificationCode();
     const hashedPassword = await hashPassword(signupDTO.password);
 
     const user = isExisting
@@ -67,11 +68,13 @@ export class AuthService {
 
   async resend(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    
-    if (!user) throw new NotFoundException('User not found.');
-    if (user.isVerified) throw new ConflictException('Email is already registered');
 
-    const { verificationCode, verificationCodeExpiresAt } = this.emailService.generateVerificationCode();
+    if (!user) throw new NotFoundException('User not found.');
+    if (user.isVerified)
+      throw new ConflictException('Email is already registered');
+
+    const { verificationCode, verificationCodeExpiresAt } =
+      this.emailService.generateVerificationCode();
 
     await this.prisma.user.update({
       where: { id: user.id },

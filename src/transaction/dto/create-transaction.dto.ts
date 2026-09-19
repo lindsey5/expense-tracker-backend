@@ -1,10 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsEnum,
-  IsNumber,
-  IsString,
-  Min,
-} from 'class-validator';
+import { IsEnum, IsNumber, IsString, Min } from 'class-validator';
 import { TransactionCategory, TransactionType } from 'generated/prisma/enums';
 
 export class CreateTransactionDto {
@@ -31,5 +26,4 @@ export class CreateTransactionDto {
 
   @ApiProperty()
   date!: Date;
-  
 }
