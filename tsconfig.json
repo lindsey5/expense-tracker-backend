@@ -3,7 +3,7 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "target": "ES2023",
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist",
     "paths": {
       "src/*": ["./src/*"],
@@ -25,5 +25,6 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "types": ["node", "jest"]
-  }
+  },
+  "include": ["src/**/*.ts", "generated/**/*.ts", "prisma7.config.ts"]
 }
