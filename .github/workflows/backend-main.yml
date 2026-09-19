@@ -116,3 +116,47 @@ jobs:
             --header "Content-Type: application/json" \
             --data "{\"image\":\"${{ env.IMAGE_NAME }}:${{ github.sha }}\",\"sha\":\"${{ github.sha }}\"}" \
             "$PRODUCTION_DEPLOY_WEBHOOK_URL"
+
+  notify:
+    name: Notify Telegram
+    needs:
+      - verify
+      - publish
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      VERIFY_RESULT: ${{ needs.verify.result }}
+      PUBLISH_RESULT: ${{ needs.publish.result }}
+
+    steps:
+      - name: Send Telegram notification
+        if: ${{ env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != '' }}
+        run: |
+          if [ "$VERIFY_RESULT" = "success" ] && { [ "$PUBLISH_RESULT" = "success" ] || [ "$PUBLISH_RESULT" = "skipped" ]; }; then
+            ICON="✅"
+            STATUS="success"
+          elif [ "$VERIFY_RESULT" = "cancelled" ] || [ "$PUBLISH_RESULT" = "cancelled" ]; then
+            ICON="⚠️"
+            STATUS="cancelled"
+          else
+            ICON="❌"
+            STATUS="failed"
+          fi
+
+          MESSAGE="$ICON Backend Main CI/CD: $STATUS
+          Repository: ${{ github.repository }}
+          Branch: ${{ github.ref_name }}
+          Actor: ${{ github.actor }}
+          Commit: ${{ github.sha }}
+          Verify: $VERIFY_RESULT
+          Publish: $PUBLISH_RESULT
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          curl --fail --silent --show-error \
+            --request POST \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${MESSAGE}"
