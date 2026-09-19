@@ -3,6 +3,7 @@ import { jest } from '@jest/globals';
 import { TransactionController } from './transaction.controller';
 import { TransactionService } from './transaction.service';
 import { TransactionSummaryService } from './transaction-summary.service';
+import { CreateTransactionDto } from './dto/create-transaction.dto';
 
 const mockTransactionService = {
   create: jest.fn(),
@@ -17,6 +18,8 @@ const mockTransactionSummaryService = {
 
 describe('TransactionController', () => {
   let controller: TransactionController;
+  const incomeType = 'INCOME' as CreateTransactionDto['type'];
+  const salaryCategory = 'SALARY' as CreateTransactionDto['category'];
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -41,8 +44,8 @@ describe('TransactionController', () => {
   it('delegates create requests to TransactionService', async () => {
     const dto = {
       walletId: 'wallet-123',
-      type: 'INCOME' as any,
-      category: 'SALARY' as any,
+      type: incomeType,
+      category: salaryCategory,
       amount: 5000,
       title: 'Monthly Salary',
       date: new Date('2026-09-19T00:00:00.000Z'),

@@ -3,6 +3,16 @@ import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetTransactionsDto } from './dto/get-transaction.dto';
 
+type TransactionListWhere = {
+  userId: string;
+  type?: GetTransactionsDto['type'];
+  category?: GetTransactionsDto['category'];
+  title?: {
+    contains: string;
+    mode: 'insensitive';
+  };
+};
+
 @Injectable()
 export class TransactionService {
   constructor(private readonly prisma: PrismaService) {}
@@ -67,7 +77,7 @@ export class TransactionService {
 
     const skip = (page - 1) * limit;
 
-    const where: any = { userId };
+    const where: TransactionListWhere = { userId };
 
     if (type) {
       where.type = type;

@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { jest } from '@jest/globals';
 import { TransactionService } from './transaction.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { GetTransactionsDto } from './dto/get-transaction.dto';
 
 const mockPrismaService = {
   wallet: {
@@ -24,6 +26,10 @@ const mockPrismaService = {
 
 describe('TransactionService', () => {
   let service: TransactionService;
+  const incomeType = 'INCOME' as CreateTransactionDto['type'];
+  const expenseType = 'EXPENSE' as CreateTransactionDto['type'];
+  const salaryCategory = 'SALARY' as CreateTransactionDto['category'];
+  const foodCategory = 'FOOD' as CreateTransactionDto['category'];
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -44,8 +50,8 @@ describe('TransactionService', () => {
   describe('create', () => {
     const createTransactionDto = {
       walletId: 'wallet-123',
-      type: 'INCOME' as any,
-      category: 'SALARY' as any,
+      type: incomeType,
+      category: salaryCategory,
       amount: 5000,
       title: 'Monthly Salary',
       date: new Date('2026-09-19T10:30:00.000Z'),
@@ -126,8 +132,8 @@ describe('TransactionService', () => {
     it('creates an expense transaction and decreases the wallet balance', async () => {
       const expenseDto = {
         walletId: 'wallet-123',
-        type: 'EXPENSE' as any,
-        category: 'FOOD' as any,
+        type: expenseType,
+        category: foodCategory,
         amount: 1000,
         title: 'Dinner',
         date: new Date('2026-09-19T10:30:00.000Z'),
@@ -203,8 +209,8 @@ describe('TransactionService', () => {
         limit: 10,
         month: 9,
         year: 2026,
-        type: 'EXPENSE' as any,
-        category: 'FOOD' as any,
+        type: expenseType as GetTransactionsDto['type'],
+        category: foodCategory as GetTransactionsDto['category'],
         search: 'din',
       });
 

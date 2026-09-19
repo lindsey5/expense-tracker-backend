@@ -177,7 +177,7 @@ describe('AuthService', () => {
         data: {
           firstName: 'John',
           lastName: 'Doe',
-          password: expect.any(String),
+          password: expect.stringMatching(/^\$2[aby]\$12\$/),
           verificationCode: '123456',
           verificationCodeExpiresAt:
             mockGeneratedVerificationCode.verificationCodeExpiresAt,
@@ -213,7 +213,7 @@ describe('AuthService', () => {
           firstName: 'John',
           lastName: 'Doe',
           email: 'test@example.com',
-          password: expect.any(String),
+          password: expect.stringMatching(/^\$2[aby]\$12\$/),
           verificationCode: '123456',
           verificationCodeExpiresAt:
             mockGeneratedVerificationCode.verificationCodeExpiresAt,
