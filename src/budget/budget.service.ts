@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -116,14 +116,45 @@ export class BudgetService {
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} budget`;
+    return `This action returns a #${id} budget.`;
   }
 
-  update(id: number, updateBudgetDto: UpdateBudgetDto) {
-    return `This action updates a #${id} budget`;
+  async update(id: string, userId: string, updateBudgetDto: UpdateBudgetDto) {
+    const budget = await this.prisma.budget.findUnique({
+      where: { id }
+    });
+
+    if(!budget) {
+      throw new NotFoundException("Budget not found."); 
+    }
+
+    if(budget.userId !== userId) {
+      throw new UnauthorizedException('Unauthorized.');
+    }
+
+    const updatedBudget = await this.prisma.budget.update({
+      where: { id },
+      data: updateBudgetDto
+    })
+
+    return {
+      message: "Budget successfully updated.",
+      budget: updatedBudget
+    }
+
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} budget`;
+  async remove(id: string, userId: string) {
+    const budget = await this.prisma.budget.findUnique({
+      where: { id, userId }
+    });
+
+    if(!budget) {
+      throw new NotFoundException("Budget not found."); 
+    }
+
+    await this.prisma.budget.delete({ where: { id }});
+
+    return { message: "Budget successfully removed."}
   }
 }
