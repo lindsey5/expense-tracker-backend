@@ -1,0 +1,61 @@
+name: Backend Dev CI
+
+on:
+  pull_request:
+    branches:
+      - dev
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+concurrency:
+  group: backend-dev-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  verify:
+    name: Fast backend verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.CI_JWT_SECRET }}
+      JWT_EXPIRES_IN: ${{ secrets.CI_JWT_EXPIRES_IN }}
+      EMAIL_USER: ${{ secrets.CI_EMAIL_USER }}
+      BREVO_API_KEY: ${{ secrets.CI_BREVO_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate --config prisma7.config.ts
+
+      - name: Lint
+        run: npm run lint:check
+
+      - name: Unit tests with 90% coverage gate
+        run: >
+          npm run test:cov --
+          --coverageThreshold='{"global":{"branches":90,"functions":90,"lines":90,"statements":90}}'
+
+      - name: Build backend
+        run: npm run build
