@@ -9,6 +9,7 @@ import { TransactionModule } from './transaction/transaction.module';
 import { WalletModule } from './wallet/wallet.module';
 import { JwtStrategy } from './auth/strategies/jwt.strategy';
 import { BudgetModule } from './budget/budget.module';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
   imports: [
