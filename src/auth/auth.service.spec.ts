@@ -17,16 +17,48 @@ type MockUser = {
   verificationCodeExpiresAt?: Date | null;
 };
 
+type UserFindUniqueArgs = {
+  where?: {
+    email?: string;
+    isVerified?: boolean;
+  };
+};
+
+type UserCreateArgs = {
+  data: {
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    password?: string;
+    verificationCode?: string;
+    verificationCodeExpiresAt?: Date;
+  };
+};
+
+type UserUpdateArgs = {
+  where: {
+    id: string;
+  };
+  data: {
+    firstName?: string;
+    lastName?: string;
+    password?: string;
+    verificationCode?: string | null;
+    verificationCodeExpiresAt?: Date | null;
+    isVerified?: boolean;
+  };
+};
+
 const mockPrismaService = {
   user: {
     findUnique: jest.fn() as jest.MockedFunction<
-      (args?: unknown) => Promise<MockUser | null>
+      (args?: UserFindUniqueArgs) => Promise<MockUser | null>
     >,
     create: jest.fn() as jest.MockedFunction<
-      (args?: unknown) => Promise<MockUser>
+      (args: UserCreateArgs) => Promise<MockUser>
     >,
     update: jest.fn() as jest.MockedFunction<
-      (args?: unknown) => Promise<MockUser>
+      (args: UserUpdateArgs) => Promise<MockUser>
     >,
   },
 };
@@ -211,30 +243,23 @@ describe('AuthService', () => {
         id: 'user-123',
       });
 
-      expect(mockPrismaService.user.update).toHaveBeenCalledWith({
-        where: {
-          id: 'user-123',
-        },
-        data: expect.objectContaining({
-          firstName: 'John',
-          lastName: 'Doe',
-          password: expect.any(String),
-          verificationCode: '123456',
-          verificationCodeExpiresAt:
-            mockGeneratedVerificationCode.verificationCodeExpiresAt,
-        }),
+      expect(mockPrismaService.user.update).toHaveBeenCalledTimes(1);
+
+      const updateCall = mockPrismaService.user.update.mock.calls[0][0];
+
+      expect(updateCall.where).toEqual({
+        id: 'user-123',
       });
 
-      const updateCall = mockPrismaService.user.update.mock.calls[0]?.[0] as
-        | {
-            data?: {
-              password?: string;
-            };
-          }
-        | undefined;
+      expect(updateCall.data.firstName).toBe('John');
+      expect(updateCall.data.lastName).toBe('Doe');
+      expect(updateCall.data.verificationCode).toBe('123456');
+      expect(updateCall.data.verificationCodeExpiresAt).toEqual(
+        mockGeneratedVerificationCode.verificationCodeExpiresAt,
+      );
 
-      expect(updateCall?.data?.password).toBeDefined();
-      expect(updateCall?.data?.password).not.toBe(signupDto.password);
+      expect(updateCall.data.password).toBeDefined();
+      expect(updateCall.data.password).not.toBe(signupDto.password);
 
       expect(mockPrismaService.user.create).not.toHaveBeenCalled();
 
@@ -263,28 +288,20 @@ describe('AuthService', () => {
         id: 'user-123',
       });
 
-      expect(mockPrismaService.user.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'test@example.com',
-          password: expect.any(String),
-          verificationCode: '123456',
-          verificationCodeExpiresAt:
-            mockGeneratedVerificationCode.verificationCodeExpiresAt,
-        }),
-      });
+      expect(mockPrismaService.user.create).toHaveBeenCalledTimes(1);
 
-      const createCall = mockPrismaService.user.create.mock.calls[0]?.[0] as
-        | {
-            data?: {
-              password?: string;
-            };
-          }
-        | undefined;
+      const createCall = mockPrismaService.user.create.mock.calls[0][0];
 
-      expect(createCall?.data?.password).toBeDefined();
-      expect(createCall?.data?.password).not.toBe(signupDto.password);
+      expect(createCall.data.email).toBe('test@example.com');
+      expect(createCall.data.firstName).toBe('John');
+      expect(createCall.data.lastName).toBe('Doe');
+      expect(createCall.data.verificationCode).toBe('123456');
+      expect(createCall.data.verificationCodeExpiresAt).toEqual(
+        mockGeneratedVerificationCode.verificationCodeExpiresAt,
+      );
+
+      expect(createCall.data.password).toBeDefined();
+      expect(createCall.data.password).not.toBe(signupDto.password);
 
       expect(mockPrismaService.user.update).not.toHaveBeenCalled();
 
