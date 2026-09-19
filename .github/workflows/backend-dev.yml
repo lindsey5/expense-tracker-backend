@@ -4,9 +4,11 @@ on:
   pull_request:
     branches:
       - dev
+
   push:
     branches:
       - dev
+
   workflow_dispatch:
 
 concurrency:
@@ -21,7 +23,7 @@ env:
 
 jobs:
   verify:
-    name: Fast backend verification
+    name: Fast Backend Verification
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -61,11 +63,15 @@ jobs:
         run: npm run build
 
   notify:
-    name: Notify Telegram
-    needs: verify
-    if: always()
+    name: Telegram Notification
+    needs:
+      - verify
+
+    if: ${{ always() }}
+
     runs-on: ubuntu-latest
     timeout-minutes: 5
+
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -74,21 +80,29 @@ jobs:
     steps:
       - name: Send Telegram notification
         if: ${{ env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != '' }}
+
         run: |
-          STATUS="$VERIFY_RESULT"
-          if [ "$STATUS" = "success" ]; then
-            LABEL="[OK]"
-          elif [ "$STATUS" = "cancelled" ]; then
-            LABEL="[CANCELLED]"
+          if [ "$VERIFY_RESULT" = "success" ]; then
+            ICON="✅"
+            STATUS="SUCCESS"
+          elif [ "$VERIFY_RESULT" = "cancelled" ]; then
+            ICON="⚠️"
+            STATUS="CANCELLED"
           else
-            LABEL="[FAILED]"
+            ICON="❌"
+            STATUS="FAILED"
           fi
 
-          MESSAGE="$LABEL Backend Dev CI: $STATUS
+          MESSAGE="$ICON Backend Dev CI: $STATUS
+
           Repository: ${{ github.repository }}
           Branch: ${{ github.ref_name }}
           Actor: ${{ github.actor }}
+
+          Verification: $VERIFY_RESULT
+
           Commit: ${{ github.sha }}
+
           Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           curl --fail --silent --show-error \
