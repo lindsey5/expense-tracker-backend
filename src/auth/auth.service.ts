@@ -27,10 +27,7 @@ export class AuthService {
       throw new ConflictException('Email is already registered');
     }
 
-    const verificationCode = Math.floor(
-      100000 + Math.random() * 900000,
-    ).toString();
-    const verificationCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    const { verificationCode, verificationCodeExpiresAt } = this.emailService.generateVerificationCode();
     const hashedPassword = await hashPassword(signupDTO.password);
 
     const user = isExisting
@@ -70,14 +67,11 @@ export class AuthService {
 
   async resend(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
+    
     if (!user) throw new NotFoundException('User not found.');
-    if (user.isVerified)
-      throw new ConflictException('Email is already registered');
+    if (user.isVerified) throw new ConflictException('Email is already registered');
 
-    const verificationCode = Math.floor(
-      100000 + Math.random() * 900000,
-    ).toString();
-    const verificationCodeExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    const { verificationCode, verificationCodeExpiresAt } = this.emailService.generateVerificationCode();
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -99,6 +93,7 @@ export class AuthService {
 
   async verifyUser(email: string, verificationCode: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
+
     if (!user) throw new NotFoundException('User not found.');
     if (user.isVerified) {
       throw new ConflictException('User account is already verified.');
@@ -134,17 +129,9 @@ export class AuthService {
 
   async login(loginDTO: LoginUserDTO) {
     const user = await this.prisma.user.findUnique({
-      where: { email: loginDTO.email },
+      where: { email: loginDTO.email, isVerified: true },
     });
     if (!user) throw new UnauthorizedException('Invalid email or password.');
-    if (!user.password) {
-      throw new UnauthorizedException('This account uses Google login.');
-    }
-    if (!user.isVerified) {
-      throw new UnauthorizedException(
-        'Please verify your email before logging in.',
-      );
-    }
 
     const isPasswordValid = await comparePassword(
       loginDTO.password,
