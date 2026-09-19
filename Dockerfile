@@ -8,7 +8,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-RUN npx prisma generate
+RUN npx prisma generate --config=prisma7.config.ts
 
 FROM node:24-alpine AS production
 
