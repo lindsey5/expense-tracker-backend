@@ -1,12 +1,14 @@
-name: Backend Main CI/CD
+name: Backend CI/CD Pipeline
 
 on:
   pull_request:
     branches:
       - main
+
   push:
     branches:
       - main
+
   workflow_dispatch:
 
 concurrency:
@@ -19,13 +21,13 @@ permissions:
 
 env:
   NODE_VERSION: '24'
-  IMAGE_NAME: ghcr.io/${{ github.repository }}/backend
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
 
 jobs:
   verify:
-    name: Verify backend
+    name: Verify Backend
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     env:
       DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
@@ -37,6 +39,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -51,6 +55,14 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate --config prisma7.config.ts
 
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+      - name: Scan for leaked secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Lint
         run: npm run lint:check
 
@@ -59,19 +71,20 @@ jobs:
           npm run test:cov --
           --coverageThreshold='{"global":{"branches":90,"functions":90,"lines":90,"statements":90}}'
 
-      - name: Module e2e tests
+      - name: Module E2E tests
         run: npm run test:e2e -- modules
 
       - name: Build backend
         run: npm run build
 
   publish:
-    name: Publish production image
+    name: Publish Production Image
     needs: verify
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
+
     env:
       PRODUCTION_DEPLOY_WEBHOOK_URL: ${{ secrets.PRODUCTION_DEPLOY_WEBHOOK_URL }}
 
@@ -96,7 +109,7 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=production
-            type=sha,prefix=
+            type=sha,prefix=sha-
 
       - name: Build and push production image
         uses: docker/build-push-action@v6
@@ -114,17 +127,18 @@ jobs:
           curl --fail --silent --show-error \
             --request POST \
             --header "Content-Type: application/json" \
-            --data "{\"image\":\"${{ env.IMAGE_NAME }}:${{ github.sha }}\",\"sha\":\"${{ github.sha }}\"}" \
+            --data "{\"image\":\"${{ env.IMAGE_NAME }}:sha-${GITHUB_SHA::7}\",\"sha\":\"${{ github.sha }}\"}" \
             "$PRODUCTION_DEPLOY_WEBHOOK_URL"
 
   notify:
-    name: Notify Telegram
+    name: Telegram Notification
     needs:
       - verify
       - publish
-    if: always()
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
+
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -135,24 +149,29 @@ jobs:
       - name: Send Telegram notification
         if: ${{ env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != '' }}
         run: |
-          if [ "$VERIFY_RESULT" = "success" ] && { [ "$PUBLISH_RESULT" = "success" ] || [ "$PUBLISH_RESULT" = "skipped" ]; }; then
+          if [ "$VERIFY_RESULT" = "success" ] && \
+             { [ "$PUBLISH_RESULT" = "success" ] || [ "$PUBLISH_RESULT" = "skipped" ]; }; then
             ICON="✅"
-            STATUS="success"
-          elif [ "$VERIFY_RESULT" = "cancelled" ] || [ "$PUBLISH_RESULT" = "cancelled" ]; then
+            STATUS="SUCCESS"
+          elif [ "$VERIFY_RESULT" = "cancelled" ] || \
+               [ "$PUBLISH_RESULT" = "cancelled" ]; then
             ICON="⚠️"
-            STATUS="cancelled"
+            STATUS="CANCELLED"
           else
             ICON="❌"
-            STATUS="failed"
+            STATUS="FAILED"
           fi
 
-          MESSAGE="$ICON Backend Main CI/CD: $STATUS
+          MESSAGE="$ICON Backend CI/CD Pipeline: $STATUS
+
           Repository: ${{ github.repository }}
           Branch: ${{ github.ref_name }}
           Actor: ${{ github.actor }}
           Commit: ${{ github.sha }}
+
           Verify: $VERIFY_RESULT
           Publish: $PUBLISH_RESULT
+
           Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           curl --fail --silent --show-error \
