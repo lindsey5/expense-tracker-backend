@@ -8,6 +8,8 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
+RUN npx prisma generate
+
 FROM node:24-alpine AS production
 
 WORKDIR /app

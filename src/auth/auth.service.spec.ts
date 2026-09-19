@@ -1,351 +1,371 @@
+import { jest } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
+import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { JwtService } from '@nestjs/jwt';
 import { EmailService } from 'src/email/email.service';
 import { hashPassword } from 'src/utils/auth';
-import {
-  beforeEach,
-  describe,
-  expect,
-  it,
-  jest,
-} from '@jest/globals';
 
 const mockPrismaService = {
   user: {
-    findUnique: jest.fn<(args?: any) => Promise<any>>(),
-    create: jest.fn<(args?: any) => Promise<any>>(),
-    update: jest.fn<(args?: any) => Promise<any>>(),
+    findUnique: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
   },
 };
 
 const mockJwtService = {
-  signAsync: jest.fn<(payload?: any) => Promise<string>>(),
+  signAsync: jest.fn(),
 };
 
 const mockEmailService = {
-    generateVerificationCode: jest.fn<(args?: any) => { verificationCode: string, verificationCodeExpiresAt: Date }>(),
-    sendVerificationCode: jest.fn<(email?: string, firstName?: string, code?: string) => Promise<void>>(),
+  generateVerificationCode: jest.fn(),
+  sendVerificationCode: jest.fn(),
 };
 
-const mockGeneratedVerificationCode = { 
-    verificationCode: "123456", 
-    verificationCodeExpiresAt: new Date()
-}
+const mockGeneratedVerificationCode = {
+  verificationCode: '123456',
+  verificationCodeExpiresAt: new Date('2026-09-19T00:15:00.000Z'),
+};
 
 describe('AuthService', () => {
-    let service: AuthService;
+  let service: AuthService;
 
-    beforeEach(async () => {
-        jest.clearAllMocks();
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    mockEmailService.generateVerificationCode.mockReturnValue(
+      mockGeneratedVerificationCode,
+    );
 
-        const module: TestingModule = await Test.createTestingModule({
-        providers: [
-            AuthService,
-            {
-                provide: PrismaService,
-                useValue: mockPrismaService,
-            },
-            {
-                provide: JwtService,
-                useValue: mockJwtService,
-            },
-            {
-                provide: EmailService,
-                useValue: mockEmailService,
-            },
-        ],
-        }).compile();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AuthService,
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
+        },
+        {
+          provide: JwtService,
+          useValue: mockJwtService,
+        },
+        {
+          provide: EmailService,
+          useValue: mockEmailService,
+        },
+      ],
+    }).compile();
 
-        service = module.get<AuthService>(AuthService);
+    service = module.get<AuthService>(AuthService);
+  });
+
+  describe('login', () => {
+    const loginDto = {
+      email: 'test@example.com',
+      password: 'Password123!',
+    };
+
+    it('logs in a verified user successfully', async () => {
+      const hashedPassword = await hashPassword(loginDto.password);
+      const user = {
+        id: 'user-123',
+        email: 'test@example.com',
+        password: hashedPassword,
+        firstName: 'John',
+        lastName: 'Doe',
+        isVerified: true,
+      };
+
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+      mockJwtService.signAsync.mockResolvedValue('access-token');
+
+      await expect(service.login(loginDto)).resolves.toEqual({
+        accessToken: 'access-token',
+        user: {
+          id: 'user-123',
+          email: 'test@example.com',
+          firstName: 'John',
+          lastName: 'Doe',
+          isVerified: true,
+        },
+      });
+      expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+        where: {
+          email: 'test@example.com',
+          isVerified: true,
+        },
+      });
+      expect(mockJwtService.signAsync).toHaveBeenCalledWith({
+        sub: 'user-123',
+        email: 'test@example.com',
+      });
     });
 
-    describe('login', () => {
-        const loginDto = {
-            email: 'test@example.com',
-            password: 'Password123!',
-        };
+    it('throws when password is incorrect', async () => {
+      const user = {
+        id: 'user-123',
+        email: 'test@example.com',
+        password: await hashPassword('DifferentPassword123!'),
+        firstName: 'John',
+        lastName: 'Doe',
+        isVerified: true,
+      };
 
-        it('should login successfully', async () => {
-            const hashedPassword = await hashPassword(loginDto.password);
-            const user = {
-                id: 'user-123',
-                email: 'test@example.com',
-                password: hashedPassword,
-                firstName: 'John',
-                lastName: 'Doe',
-                isVerified: true,
-            };
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
 
-            mockPrismaService.user.findUnique.mockResolvedValue(user);
-            mockJwtService.signAsync.mockResolvedValue('access-token');
-
-            const result = await service.login(loginDto);
-
-            expect(result).toEqual({
-                accessToken: 'access-token',
-                user: {
-                    id: 'user-123',
-                    email: 'test@example.com',
-                    firstName: 'John',
-                    lastName: 'Doe',
-                    isVerified: true,
-                },
-            });
-
-            expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
-                where: {
-                    email: 'test@example.com',
-                    isVerified: true,
-                },
-            });
-
-            expect(mockJwtService.signAsync).toHaveBeenCalledWith({
-                sub: 'user-123',
-                email: 'test@example.com',
-            });
-        
-        });
-
-        it('should throw error when password is incorrect', async () => {
-            const user = {
-                id: 'user-123',
-                email: 'test@example.com',
-                password: 'some-hashed-password',
-                firstName: 'John',
-                lastName: 'Doe',
-                isVerified: true,
-            };
-
-            mockPrismaService.user.findUnique.mockResolvedValue(user);
-
-            await expect(service.login(loginDto)).rejects.toThrow('Invalid email or password.');
-        });
-
-        it('should throw error when user is not found', async () => {
-            mockPrismaService.user.findUnique.mockResolvedValue(null);
-
-            await expect(service.login(loginDto)).rejects.toThrow('Invalid email or password.');
-            
-            expect(mockJwtService.signAsync).not.toHaveBeenCalled();
-        });
+      await expect(service.login(loginDto)).rejects.toThrow(
+        'Invalid email or password.',
+      );
+      expect(mockJwtService.signAsync).not.toHaveBeenCalled();
     });
 
-    describe('signup', () => {
-        const signupDto = {
-            email: "test@example.com",
-            firstName: "John",
-            lastName: "Doe",
-            password: "Password@1",
-        }
+    it('throws when user is not found', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-        it('should return error when email is already registered', async () => {
-            const user = {
-                email: "test@example.com",
-                isVerified: true
-            }
+      await expect(service.login(loginDto)).rejects.toThrow(
+        'Invalid email or password.',
+      );
+      expect(mockJwtService.signAsync).not.toHaveBeenCalled();
+    });
+  });
 
-            mockPrismaService.user.findUnique.mockResolvedValue(user);
+  describe('signup', () => {
+    const signupDto = {
+      email: 'test@example.com',
+      firstName: 'John',
+      lastName: 'Doe',
+      password: 'Password@1',
+    };
 
-            await expect(service.signup(signupDto)).rejects.toThrow('Email is already registered');
-            
-            expect(mockPrismaService.user.update).not.toHaveBeenCalled();
-            expect(mockPrismaService.user.create).not.toHaveBeenCalled();
-            expect(mockEmailService.sendVerificationCode).not.toHaveBeenCalled();
-        })
+    it('throws when email is already registered and verified', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        email: 'test@example.com',
+        isVerified: true,
+      });
 
-        it('should signup successfully', async () => {
-            const user = { 
-                id: "user-123", 
-                email: "test@example.com", 
-                firstName: "John",
-                lastName: "Doe",
-                password: "Password@1",
-                isVerified: false,
-            };
-            
-            mockPrismaService.user.findUnique.mockResolvedValue(user);
-            mockPrismaService.user.update.mockResolvedValue(user);
-            mockEmailService.generateVerificationCode.mockReturnValue(mockGeneratedVerificationCode);
+      await expect(service.signup(signupDto)).rejects.toThrow(
+        'Email is already registered',
+      );
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+      expect(mockPrismaService.user.create).not.toHaveBeenCalled();
+      expect(mockEmailService.sendVerificationCode).not.toHaveBeenCalled();
+    });
 
-            expect(await service.signup(signupDto)).toEqual({
-                message: 'Registration successful. Please check your email to verify your account.',
-                id: user.id
-            });
+    it('updates an existing unverified user and sends a verification code', async () => {
+      const existingUser = {
+        id: 'user-123',
+        email: 'test@example.com',
+        firstName: 'Old',
+        lastName: 'Name',
+        isVerified: false,
+      };
+      const updatedUser = {
+        ...existingUser,
+        firstName: 'John',
+        lastName: 'Doe',
+      };
 
-            expect(mockEmailService.sendVerificationCode).toHaveBeenCalledWith(
-                'test@example.com',
-                'John',
-                mockGeneratedVerificationCode.verificationCode
-            );
+      mockPrismaService.user.findUnique.mockResolvedValue(existingUser);
+      mockPrismaService.user.update.mockResolvedValue(updatedUser);
 
-            expect(mockPrismaService.user.create).not.toHaveBeenCalled();
-        })
+      await expect(service.signup(signupDto)).resolves.toEqual({
+        message:
+          'Registration successful. Please check your email to verify your account.',
+        id: 'user-123',
+      });
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
+        data: {
+          firstName: 'John',
+          lastName: 'Doe',
+          password: expect.any(String),
+          verificationCode: '123456',
+          verificationCodeExpiresAt:
+            mockGeneratedVerificationCode.verificationCodeExpiresAt,
+        },
+      });
+      expect(mockPrismaService.user.create).not.toHaveBeenCalled();
+      expect(mockEmailService.sendVerificationCode).toHaveBeenCalledWith(
+        'test@example.com',
+        'John',
+        '123456',
+      );
+    });
 
-        it('should signup successfully', async () => {
-            const user = { 
-                id: "user-123", 
-                email: "test@example.com", 
-                firstName: "test",
-                password: "Password123@",
-                isVerified: false,
-            };
-            
-            mockPrismaService.user.findUnique.mockResolvedValue(null);
-            mockPrismaService.user.create.mockResolvedValue(user);
+    it('creates a new user and sends a verification code', async () => {
+      const createdUser = {
+        id: 'user-123',
+        email: 'test@example.com',
+        firstName: 'John',
+        lastName: 'Doe',
+        isVerified: false,
+      };
 
-            expect(await service.signup(signupDto)).toEqual({
-                message: 'Registration successful. Please check your email to verify your account.',
-                id: user.id,
-            });
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+      mockPrismaService.user.create.mockResolvedValue(createdUser);
 
-            expect(mockEmailService.sendVerificationCode).toHaveBeenCalledWith(
-                'test@example.com',
-                'test',
-                expect.stringMatching(/^\d{6}$/),
-            );
+      await expect(service.signup(signupDto)).resolves.toEqual({
+        message:
+          'Registration successful. Please check your email to verify your account.',
+        id: 'user-123',
+      });
+      expect(mockPrismaService.user.create).toHaveBeenCalledWith({
+        data: {
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'test@example.com',
+          password: expect.any(String),
+          verificationCode: '123456',
+          verificationCodeExpiresAt:
+            mockGeneratedVerificationCode.verificationCodeExpiresAt,
+        },
+      });
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+      expect(mockEmailService.sendVerificationCode).toHaveBeenCalledWith(
+        'test@example.com',
+        'John',
+        '123456',
+      );
+    });
+  });
 
-            expect(mockPrismaService.user.update).not.toHaveBeenCalled();
-        })
-    })
+  describe('resend', () => {
+    it('throws when user is not found', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-    describe('resend', () => {
-        it('should throw error when user not found', async () => {
-            mockPrismaService.user.findUnique.mockResolvedValue(null);
+      await expect(service.resend('test@example.com')).rejects.toThrow(
+        'User not found.',
+      );
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+      expect(mockEmailService.sendVerificationCode).not.toHaveBeenCalled();
+    });
 
-            await expect(service.resend('test@example.com')).rejects.toThrow('User not found.');
-        
-            expect(mockPrismaService.user.update).not.toHaveBeenCalled();
-            expect(mockEmailService.sendVerificationCode).not.toHaveBeenCalled();
-        });
+    it('throws when user is already verified', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'user-123',
+        isVerified: true,
+      });
 
-        it('should throw error when user is already verified', async () => {
-            const user = {
-                isVerified: true,
-            }
+      await expect(service.resend('test@example.com')).rejects.toThrow(
+        'Email is already registered',
+      );
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+      expect(mockEmailService.sendVerificationCode).not.toHaveBeenCalled();
+    });
 
-            mockPrismaService.user.findUnique.mockResolvedValue(user);
+    it('resends a verification code for an unverified user', async () => {
+      const user = {
+        id: 'user-123',
+        email: 'test@example.com',
+        firstName: 'John',
+        isVerified: false,
+      };
 
-            await expect(service.resend('test@example.com')).rejects.toThrow('Email is already registered');
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
 
-            expect(mockPrismaService.user.update).not.toHaveBeenCalled();
-            expect(mockEmailService.sendVerificationCode).not.toHaveBeenCalled()
-        })
+      await expect(service.resend(user.email)).resolves.toEqual({
+        message:
+          'Registration successful. Please check your email to verify your account.',
+        id: 'user-123',
+      });
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
+        data: mockGeneratedVerificationCode,
+      });
+      expect(mockEmailService.sendVerificationCode).toHaveBeenCalledWith(
+        'test@example.com',
+        'John',
+        '123456',
+      );
+    });
+  });
 
-        it('should resend successfully', async () => {
-            const user = { 
-                id: "user-123", 
-                email: "test@example.com", 
-                firstName: "test",
-                password: "Password123@",
-                isVerified: false,
-            };
+  describe('verifyUser', () => {
+    it('throws when user is not found', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-            mockPrismaService.user.findUnique.mockResolvedValue(user);
-            mockEmailService.generateVerificationCode.mockReturnValue(mockGeneratedVerificationCode);
+      await expect(
+        service.verifyUser('test@example.com', '123456'),
+      ).rejects.toThrow('User not found.');
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+    });
 
-            expect(await service.resend(user.email)).toEqual({
-                message:  'Registration successful. Please check your email to verify your account.',
-                id: user.id
-            })
+    it('throws when user is already verified', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        isVerified: true,
+      });
 
-            expect(mockPrismaService.user.update).toHaveBeenCalledWith({
-                where: { id: user.id },
-                data: mockGeneratedVerificationCode,
-            })
+      await expect(
+        service.verifyUser('test@example.com', '123456'),
+      ).rejects.toThrow('User account is already verified');
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+    });
 
-            expect(mockEmailService.sendVerificationCode).toHaveBeenCalledWith(
-                user.email,
-                user.firstName,
-                mockGeneratedVerificationCode.verificationCode,
-            );
+    it('throws when user has no verification code', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        isVerified: false,
+      });
 
-        })
-    })
+      await expect(
+        service.verifyUser('test@example.com', '123456'),
+      ).rejects.toThrow('No verification code found');
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+    });
 
-    describe('verify', () => {
-        
-        it('should throw error when user not found', async () => {
-            mockPrismaService.user.findUnique.mockResolvedValue(null);
+    it('throws when verification code is expired', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        verificationCode: '123456',
+        verificationCodeExpiresAt: new Date(Date.now() - 15 * 60 * 1000),
+        isVerified: false,
+      });
 
-            expect(service.verifyUser("test@example.com", "123456")).rejects.toThrow('User not found.');;
+      await expect(
+        service.verifyUser('test@example.com', '123456'),
+      ).rejects.toThrow('Verification code has expired');
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+    });
 
-            expect(mockPrismaService.user.update).not.toHaveBeenCalled();
-        })
+    it('throws when verification code is incorrect', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        verificationCode: '123456',
+        verificationCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        isVerified: false,
+      });
 
-        it('should throw error when user is already verified', async () => {
-            const user = {
-                isVerified: true,
-            }
-            
-            mockPrismaService.user.findUnique.mockResolvedValue(user);
+      await expect(
+        service.verifyUser('test@example.com', '654321'),
+      ).rejects.toThrow('Invalid verification code.');
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+    });
 
-            expect(service.verifyUser("test@example.com", "123456")).rejects.toThrow('User account is already verified');
-        })
+    it('verifies a user successfully', async () => {
+      const user = {
+        id: 'user-123',
+        verificationCode: '123456',
+        verificationCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        isVerified: false,
+      };
+      const verifiedUser = {
+        ...user,
+        isVerified: true,
+      };
 
-        it('should throw error when user do not have verification code', async () => {
-            const user = {
-                isVerified: false,
-            } 
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+      mockPrismaService.user.update.mockResolvedValue(verifiedUser);
 
-            mockPrismaService.user.findUnique.mockResolvedValue(user);
-
-            expect(service.verifyUser("test@example.com", "123456")).rejects.toThrow("No verification code found. Please request a new code.")
-
-            expect(mockPrismaService.user.update).not.toHaveBeenCalled();
-        })
-
-        it('should throw error when verification code is expired', () => {
-            const user = {
-                verificationCode: "123456",
-                verificationCodeExpiresAt: new Date(Date.now() - 15 * 60 * 1000),
-                isVerified: false,
-            }
-
-            mockPrismaService.user.findUnique.mockResolvedValue(user);
-
-            expect(service.verifyUser("test@example.com", "123456")).rejects.toThrow('Verification code has expired. Please request a new code.');
-            expect(mockPrismaService.user.update).not.toHaveBeenCalled();
-        })
-
-        it('should throw error when verification code is incorrect', () => {
-            const user = {
-                verificationCode: "123456",
-                verificationCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
-                isVerified: false,
-            }
-
-            mockPrismaService.user.findUnique.mockResolvedValue(user);
-
-            expect(service.verifyUser("text@example.com", "123458")).rejects.toThrow("Invalid verification code.");
-            expect(mockPrismaService.user.update).not.toHaveBeenCalled();
-        })
-
-        it('should verify successfully', async () => {
-            const user = {
-                id: "user-123",
-                verificationCode: "123456",
-                verificationCodeExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
-                isVerified: false,
-            }
-
-            mockPrismaService.user.findUnique.mockResolvedValue(user);
-            mockPrismaService.user.update.mockResolvedValue(user);
-
-            expect(await service.verifyUser("text@example.com", "123456")).toEqual({
-               message: 'Account successfully verified.', 
-               id: user.id
-            })
-
-            expect(mockPrismaService.user.update).toHaveBeenCalledWith({
-                where: { id: user.id },
-                data: {
-                    isVerified: true,
-                    verificationCode: null,
-                    verificationCodeExpiresAt: null
-                }
-            })
-        })
-    })
+      await expect(
+        service.verifyUser('test@example.com', '123456'),
+      ).resolves.toEqual({
+        message: 'Account successfully verified.',
+        id: 'user-123',
+      });
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
+        data: {
+          isVerified: true,
+          verificationCode: null,
+          verificationCodeExpiresAt: null,
+        },
+      });
+    });
+  });
 });

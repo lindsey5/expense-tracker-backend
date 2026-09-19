@@ -25,13 +25,20 @@ export class TransactionService {
       const transaction = await tx.transaction.create({
         data: {
           ...data,
-          date: new Date(`${date}T00:00:00.000Z`),
+          date: new Date(
+            Date.UTC(
+              date.getUTCFullYear(),
+              date.getUTCMonth(),
+              date.getUTCDate(),
+            ),
+          ),
           userId: id,
         },
         include: {
           wallet: true,
         },
       });
+
 
       const balanceChange = data.type === 'INCOME' ? data.amount : -data.amount;
 
@@ -77,9 +84,20 @@ export class TransactionService {
       };
     }
 
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
+    const finalWhere = {
+      ...where,
+      date: {
+        gte: startDate,
+        lt: endDate,
+      },
+    };
+
     const [transactions, total] = await Promise.all([
       this.prisma.transaction.findMany({
-        where,
+        where: finalWhere,
         skip,
         take: limit,
         orderBy: {

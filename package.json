@@ -14,11 +14,12 @@
     "start:prod": "node dist/src/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "lint:check": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "test:cov": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --runInBand",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:debug": "node --inspect-brk --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
+    "test:e2e": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./test/jest-e2e.json"
   },
   "dependencies": {
     "@getbrevo/brevo": "^6.0.3",
@@ -77,11 +78,6 @@
   },
   "jest": {
     "preset": "ts-jest/presets/default-esm",
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "extensionsToTreatAsEsm": [
@@ -93,9 +89,9 @@
         {
           "useESM": true,
           "tsconfig": {
-            "module": "esnext",
-            "target": "es2023",
-            "moduleResolution": "node",
+            "module": "ESNext",
+            "target": "ES2023",
+            "moduleResolution": "Node",
             "experimentalDecorators": true,
             "emitDecoratorMetadata": true,
             "esModuleInterop": true,
@@ -106,13 +102,10 @@
     },
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/$1",
-      "^generated/(.*)$": "<rootDir>/../generated/$1",
-      "^(\\.{1,2}/.*)\\.js$": "$1"
+      "^generated/prisma/client$": "<rootDir>/test-mocks/prisma-client.ts",
+      "^generated/prisma/enums$": "<rootDir>/test-mocks/prisma-enums.ts",
+      "^generated/(.*)$": "<rootDir>/../generated/$1"
     },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   }
 }
