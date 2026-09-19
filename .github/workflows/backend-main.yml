@@ -1,4 +1,4 @@
-name: Backend CI/CD Pipeline
+name: Backend CI/CD
 
 on:
   pull_request:
@@ -24,17 +24,10 @@ env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}
 
 jobs:
-  verify:
-    name: Verify Backend
+  security:
+    name: Security Scan
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    env:
-      DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
-      JWT_SECRET: ${{ secrets.CI_JWT_SECRET }}
-      JWT_EXPIRES_IN: ${{ secrets.CI_JWT_EXPIRES_IN }}
-      EMAIL_USER: ${{ secrets.CI_EMAIL_USER }}
-      BREVO_API_KEY: ${{ secrets.CI_BREVO_API_KEY }}
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
@@ -47,15 +40,12 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma client
-        run: npx prisma generate --config prisma7.config.ts
-
       - name: Audit dependencies
+        continue-on-error: true
         run: npm audit --audit-level=high
 
       - name: Scan for leaked secrets
@@ -63,24 +53,130 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Lint
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate --config prisma7.config.ts
+
+      - name: Run ESLint
         run: npm run lint:check
 
-      - name: Unit tests with 90% coverage gate
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.CI_JWT_SECRET }}
+      JWT_EXPIRES_IN: ${{ secrets.CI_JWT_EXPIRES_IN }}
+      EMAIL_USER: ${{ secrets.CI_EMAIL_USER }}
+      BREVO_API_KEY: ${{ secrets.CI_BREVO_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate --config prisma7.config.ts
+
+      - name: Run unit tests
         run: >
           npm run test:cov --
           --coverageThreshold='{"global":{"branches":90,"functions":90,"lines":90,"statements":90}}'
 
-      - name: Module E2E tests
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.CI_JWT_SECRET }}
+      JWT_EXPIRES_IN: ${{ secrets.CI_JWT_EXPIRES_IN }}
+      EMAIL_USER: ${{ secrets.CI_EMAIL_USER }}
+      BREVO_API_KEY: ${{ secrets.CI_BREVO_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate --config prisma7.config.ts
+
+      - name: Run E2E tests
         run: npm run test:e2e -- modules
+
+  build:
+    name: Build Backend
+    needs:
+      - security
+      - lint
+      - unit-tests
+      - e2e-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate --config prisma7.config.ts
 
       - name: Build backend
         run: npm run build
 
   publish:
     name: Publish Production Image
-    needs: verify
+    needs:
+      - build
+
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
@@ -102,7 +198,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Docker metadata
+      - name: Generate Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -111,7 +207,7 @@ jobs:
             type=raw,value=production
             type=sha,prefix=sha-
 
-      - name: Build and push production image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -132,45 +228,77 @@ jobs:
 
   notify:
     name: Telegram Notification
+
     needs:
-      - verify
+      - security
+      - lint
+      - unit-tests
+      - e2e-tests
+      - build
       - publish
+
     if: ${{ always() }}
+
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      VERIFY_RESULT: ${{ needs.verify.result }}
+
+      SECURITY_RESULT: ${{ needs.security.result }}
+      LINT_RESULT: ${{ needs.lint.result }}
+      UNIT_RESULT: ${{ needs.unit-tests.result }}
+      E2E_RESULT: ${{ needs.e2e-tests.result }}
+      BUILD_RESULT: ${{ needs.build.result }}
       PUBLISH_RESULT: ${{ needs.publish.result }}
 
     steps:
       - name: Send Telegram notification
         if: ${{ env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != '' }}
+
         run: |
-          if [ "$VERIFY_RESULT" = "success" ] && \
+          if [ "$SECURITY_RESULT" = "success" ] && \
+             [ "$LINT_RESULT" = "success" ] && \
+             [ "$UNIT_RESULT" = "success" ] && \
+             [ "$E2E_RESULT" = "success" ] && \
+             [ "$BUILD_RESULT" = "success" ] && \
              { [ "$PUBLISH_RESULT" = "success" ] || [ "$PUBLISH_RESULT" = "skipped" ]; }; then
+
             ICON="✅"
             STATUS="SUCCESS"
-          elif [ "$VERIFY_RESULT" = "cancelled" ] || \
+
+          elif [ "$SECURITY_RESULT" = "cancelled" ] || \
+               [ "$LINT_RESULT" = "cancelled" ] || \
+               [ "$UNIT_RESULT" = "cancelled" ] || \
+               [ "$E2E_RESULT" = "cancelled" ] || \
+               [ "$BUILD_RESULT" = "cancelled" ] || \
                [ "$PUBLISH_RESULT" = "cancelled" ]; then
+
             ICON="⚠️"
             STATUS="CANCELLED"
+
           else
+
             ICON="❌"
             STATUS="FAILED"
+
           fi
 
-          MESSAGE="$ICON Backend CI/CD Pipeline: $STATUS
+          MESSAGE="$ICON Backend CI/CD: $STATUS
 
           Repository: ${{ github.repository }}
           Branch: ${{ github.ref_name }}
           Actor: ${{ github.actor }}
-          Commit: ${{ github.sha }}
 
-          Verify: $VERIFY_RESULT
+          Security: $SECURITY_RESULT
+          Lint: $LINT_RESULT
+          Unit Tests: $UNIT_RESULT
+          E2E Tests: $E2E_RESULT
+          Build: $BUILD_RESULT
           Publish: $PUBLISH_RESULT
+
+          Commit: ${{ github.sha }}
 
           Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
