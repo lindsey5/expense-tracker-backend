@@ -9,10 +9,6 @@ import { AuthModule } from 'src/auth/auth.module';
 @Module({
   imports: [AuthModule],
   controllers: [TransactionController],
-  providers: [
-    TransactionService,
-    PrismaService,
-    TransactionSummaryService,
-  ],
+  providers: [TransactionService, PrismaService, TransactionSummaryService],
 })
 export class TransactionModule {}

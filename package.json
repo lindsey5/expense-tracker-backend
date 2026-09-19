@@ -76,7 +76,6 @@
     "typescript-eslint": "^8.20.0"
   },
   "jest": {
-    "preset": "ts-jest/presets/default-esm",
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "extensionsToTreatAsEsm": [
@@ -90,7 +89,8 @@
           "tsconfig": {
             "module": "ESNext",
             "target": "ES2023",
-            "moduleResolution": "Node",
+            "moduleResolution": "Bundler",
+            "isolatedModules": true,
             "experimentalDecorators": true,
             "emitDecoratorMetadata": true,
             "esModuleInterop": true,
@@ -100,6 +100,7 @@
       ]
     },
     "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1",
       "^src/(.*)$": "<rootDir>/$1",
       "^generated/prisma/client$": "<rootDir>/test-mocks/prisma-client.ts",
       "^generated/prisma/enums$": "<rootDir>/test-mocks/prisma-enums.ts",

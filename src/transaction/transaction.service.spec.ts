@@ -3,7 +3,6 @@ import { jest } from '@jest/globals';
 import { TransactionService } from './transaction.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
-import { GetTransactionsDto } from './dto/get-transaction.dto';
 
 const mockPrismaService = {
   wallet: {
@@ -15,11 +14,18 @@ const mockPrismaService = {
     findMany: jest.fn(),
     count: jest.fn(),
   },
-  $transaction: jest.fn(async (callback) =>
-    callback({
-      transaction: mockPrismaService.transaction,
-      wallet: mockPrismaService.wallet,
-    }),
+  $transaction: jest.fn(
+    (
+      callback: (tx: {
+        transaction: typeof mockPrismaService.transaction;
+        wallet: typeof mockPrismaService.wallet;
+      }) => unknown,
+    ) => {
+      return callback({
+        transaction: mockPrismaService.transaction,
+        wallet: mockPrismaService.wallet,
+      });
+    },
   ),
   $queryRaw: jest.fn(),
 };
@@ -213,8 +219,8 @@ describe('TransactionService', () => {
         limit: 10,
         month: 9,
         year: 2026,
-        type: expenseType as GetTransactionsDto['type'],
-        category: foodCategory as GetTransactionsDto['category'],
+        type: expenseType,
+        category: foodCategory,
         search: 'din',
       });
 

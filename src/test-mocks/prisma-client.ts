@@ -1,3 +1,5 @@
 export class PrismaClient {
-  constructor(..._args: unknown[]) {}
+  constructor(...args: unknown[]) {
+    void args;
+  }
 }

@@ -3,6 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { BrevoClient } from '@getbrevo/brevo';
 import { verificationEmailTemplate } from 'src/templates/mail';
 
+export type VerificationCodePayload = {
+  verificationCode: string;
+  verificationCodeExpiresAt: Date;
+};
+
 @Injectable()
 export class EmailService {
   private readonly brevo: BrevoClient;
@@ -17,7 +22,7 @@ export class EmailService {
     email: string,
     firstName: string,
     verificationCode: string,
-  ) {
+  ): Promise<void> {
     try {
       await this.brevo.transactionalEmails.sendTransacEmail({
         sender: {
@@ -42,7 +47,7 @@ export class EmailService {
     }
   }
 
-  generateVerificationCode() {
+  generateVerificationCode(): VerificationCodePayload {
     const verificationCode = Math.floor(
       100000 + Math.random() * 900000,
     ).toString();

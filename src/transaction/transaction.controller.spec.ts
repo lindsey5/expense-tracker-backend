@@ -1,4 +1,3 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { jest } from '@jest/globals';
 import { TransactionController } from './transaction.controller';
 import { TransactionService } from './transaction.service';
@@ -18,27 +17,17 @@ const mockTransactionSummaryService = {
 
 describe('TransactionController', () => {
   let controller: TransactionController;
+
   const incomeType = 'INCOME' as CreateTransactionDto['type'];
   const salaryCategory = 'SALARY' as CreateTransactionDto['category'];
 
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.clearAllMocks();
 
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [TransactionController],
-      providers: [
-        {
-          provide: TransactionService,
-          useValue: mockTransactionService,
-        },
-        {
-          provide: TransactionSummaryService,
-          useValue: mockTransactionSummaryService,
-        },
-      ],
-    }).compile();
-
-    controller = module.get<TransactionController>(TransactionController);
+    controller = new TransactionController(
+      mockTransactionService as unknown as TransactionService,
+      mockTransactionSummaryService as unknown as TransactionSummaryService,
+    );
   });
 
   it('delegates create requests to TransactionService', async () => {
@@ -50,6 +39,7 @@ describe('TransactionController', () => {
       title: 'Monthly Salary',
       date: new Date('2026-09-19T00:00:00.000Z'),
     };
+
     const response = {
       message: 'Transaction successfully created.',
       transaction: { id: 'transaction-123' },
@@ -58,6 +48,7 @@ describe('TransactionController', () => {
     mockTransactionService.create.mockResolvedValue(response);
 
     await expect(controller.create('user-123', dto)).resolves.toEqual(response);
+
     expect(mockTransactionService.create).toHaveBeenCalledWith(dto, 'user-123');
   });
 
@@ -68,6 +59,7 @@ describe('TransactionController', () => {
       month: 9,
       year: 2026,
     };
+
     const response = {
       transactions: [],
       pagination: {
@@ -83,6 +75,7 @@ describe('TransactionController', () => {
     await expect(controller.findAll('user-123', query)).resolves.toEqual(
       response,
     );
+
     expect(mockTransactionService.findAll).toHaveBeenCalledWith(
       'user-123',
       query,
@@ -99,8 +92,12 @@ describe('TransactionController', () => {
     mockTransactionSummaryService.getIncome.mockResolvedValue(response);
 
     await expect(
-      controller.getIncome('user-123', { month: 9, year: 2026 }),
+      controller.getIncome('user-123', {
+        month: 9,
+        year: 2026,
+      }),
     ).resolves.toEqual(response);
+
     expect(mockTransactionSummaryService.getIncome).toHaveBeenCalledWith(
       'user-123',
       9,
@@ -118,8 +115,12 @@ describe('TransactionController', () => {
     mockTransactionSummaryService.getExpense.mockResolvedValue(response);
 
     await expect(
-      controller.getExpense('user-123', { month: 9, year: 2026 }),
+      controller.getExpense('user-123', {
+        month: 9,
+        year: 2026,
+      }),
     ).resolves.toEqual(response);
+
     expect(mockTransactionSummaryService.getExpense).toHaveBeenCalledWith(
       'user-123',
       9,
@@ -139,6 +140,7 @@ describe('TransactionController', () => {
     mockTransactionService.getMonths.mockResolvedValue(response);
 
     await expect(controller.getMonths('user-123')).resolves.toEqual(response);
+
     expect(mockTransactionService.getMonths).toHaveBeenCalledWith('user-123');
   });
 });
