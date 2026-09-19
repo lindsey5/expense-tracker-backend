@@ -3,7 +3,7 @@ import { BudgetService } from './budget.service';
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
 import { JwtAuthGuard } from 'src/auth/guards/JwtAuthGuard';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { CurrentUserId } from 'src/common/decorator/current-user.decorator';
 import { BudgetResponseDto } from './common/budget.dto';
 import { GetBudgetQueryDto } from './dto/get-budget.dto';
@@ -14,6 +14,7 @@ export class BudgetController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'create_budget' })
   @ApiOkResponse({ type: BudgetResponseDto })
   create(
     @CurrentUserId() userId: string,
@@ -24,6 +25,7 @@ export class BudgetController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'list_budgets' })
   findAll(
     @CurrentUserId() userId: string,
     @Query() query: GetBudgetQueryDto,
@@ -38,6 +40,7 @@ export class BudgetController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'update_budget' })
   update(
     @Param('id') id: string, 
     @Body() updateBudgetDto: UpdateBudgetDto,
@@ -47,6 +50,7 @@ export class BudgetController {
   }
 
   @Delete(':id')
+  @ApiOperation({ operationId: 'delete_budget' })
   @UseGuards(JwtAuthGuard)
   remove(
     @CurrentUserId() userId: string,

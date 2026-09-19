@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, UseGuards, Query } from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { JwtAuthGuard } from 'src/auth/guards/JwtAuthGuard';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { CurrentUserId } from 'src/common/decorator/current-user.decorator';
 import {
   GetTransactionsDto,
@@ -28,6 +28,7 @@ export class TransactionController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'create_transaction' })
   @ApiOkResponse({ type: CreateUpdateTransactionResponse })
   create(
     @CurrentUserId() userId: string,
@@ -38,6 +39,7 @@ export class TransactionController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'list_transactions' })
   @ApiOkResponse({ type: GetTransactionsResponseDto })
   findAll(
     @CurrentUserId() userId: string,
@@ -48,6 +50,7 @@ export class TransactionController {
 
   @Get('incomes')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'get_transaction_incomes' })
   @ApiOkResponse({ type: GetIncomesResponseDto })
   getIncome(@CurrentUserId() userId: string, @Query() dateFilter: DateFilter) {
     const { month, year } = dateFilter;
@@ -57,6 +60,7 @@ export class TransactionController {
 
   @Get('expenses')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'get_transaction_expenses' })
   @ApiOkResponse({ type: GetExpensesResponseDto })
   getExpense(@CurrentUserId() userId: string, @Query() dateFilter: DateFilter) {
     const { month, year } = dateFilter;
@@ -66,6 +70,7 @@ export class TransactionController {
 
   @Get('months')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'list_transaction_months' })
   @ApiOkResponse({ type: [GetTransactionMonths] })
   getMonths(@CurrentUserId() userId: string) {
     return this.transactionService.getMonths(userId);

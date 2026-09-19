@@ -19,6 +19,7 @@ export class GetTransactionsDto extends DateFilter {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(50)
   limit: number = 10;
 
   @ApiPropertyOptional({ enum: TransactionType })
