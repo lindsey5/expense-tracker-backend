@@ -52,7 +52,7 @@ jobs:
       (needs.security.result == 'success' || needs.security.result == 'skipped') &&
       (needs.e2e-tests.result == 'success' || needs.e2e-tests.result == 'skipped')
 
-    uses: ./.github/workflows/backend-build.yml
+    uses: ./.github/workflows/build.yml
 
   publish:
     needs:
@@ -63,7 +63,7 @@ jobs:
       github.ref == 'refs/heads/main' &&
       needs.build.result == 'success'
 
-    uses: ./.github/workflows/backend-publish.yml
+    uses: ./.github/workflows/publish.yml
     secrets: inherit
 
   notify:
@@ -77,7 +77,7 @@ jobs:
 
     if: always()
 
-    uses: ./.github/workflows/backend-notify.yml
+    uses: ./.github/workflows/notify.yml
 
     with:
       pipeline_name: Backend CI/CD
