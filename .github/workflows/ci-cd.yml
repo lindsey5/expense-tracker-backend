@@ -1,0 +1,92 @@
+name: Backend CI/CD
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+
+  push:
+    branches:
+      - dev
+      - main
+
+  workflow_dispatch:
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  security:
+    if: github.base_ref == 'main' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/security.yml
+
+  lint:
+    uses: ./.github/workflows/lint.yml
+
+  unit-tests:
+    uses: ./.github/workflows/unit-tests.yml
+    secrets: inherit
+
+  e2e-tests:
+    if: github.base_ref == 'main' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/e2e-tests.yml
+    secrets: inherit
+
+  build:
+    needs:
+      - security
+      - lint
+      - unit-tests
+      - e2e-tests
+
+    if: >
+      always() &&
+      needs.lint.result == 'success' &&
+      needs.unit-tests.result == 'success' &&
+      (needs.security.result == 'success' || needs.security.result == 'skipped') &&
+      (needs.e2e-tests.result == 'success' || needs.e2e-tests.result == 'skipped')
+
+    uses: ./.github/workflows/backend-build.yml
+
+  publish:
+    needs:
+      - build
+
+    if: >
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.build.result == 'success'
+
+    uses: ./.github/workflows/backend-publish.yml
+    secrets: inherit
+
+  notify:
+    needs:
+      - security
+      - lint
+      - unit-tests
+      - e2e-tests
+      - build
+      - publish
+
+    if: always()
+
+    uses: ./.github/workflows/backend-notify.yml
+
+    with:
+      pipeline_name: Backend CI/CD
+      branch: ${{ github.ref_name }}
+      security_result: ${{ needs.security.result }}
+      lint_result: ${{ needs.lint.result }}
+      unit_result: ${{ needs.unit-tests.result }}
+      e2e_result: ${{ needs.e2e-tests.result }}
+      build_result: ${{ needs.build.result }}
+      publish_result: ${{ needs.publish.result }}
+
+    secrets: inherit
