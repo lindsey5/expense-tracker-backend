@@ -33,7 +33,7 @@ export class BudgetService {
       );
     }
 
-    const budget = this.prisma.budget.create({
+    const budget = await this.prisma.budget.create({
       data: {
         userId,
         category,
