@@ -104,4 +104,26 @@ describe('AuthController', () => {
     await expect(controller.login(dto)).resolves.toEqual(response);
     expect(mockAuthService.login).toHaveBeenCalledWith(dto);
   });
+
+  it('loads when reflected decorator types fall back to Object', async () => {
+    await jest.isolateModulesAsync(async () => {
+      jest.unstable_mockModule('./auth.service', () => ({
+        AuthService: undefined,
+      }));
+      jest.unstable_mockModule('./dto/auth.dto', () => ({
+        AuthResponseDto: undefined,
+        LoginUserDTO: undefined,
+        ResendDTO: undefined,
+        ResendResponse: undefined,
+        SignupResponse: undefined,
+        SignupUserDTO: undefined,
+        VerifyDTO: undefined,
+        VerifyResponse: undefined,
+      }));
+
+      await expect(import('./auth.controller')).resolves.toHaveProperty(
+        'AuthController',
+      );
+    });
+  });
 });
