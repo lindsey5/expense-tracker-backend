@@ -81,12 +81,6 @@ jobs:
 
     with:
       pipeline_name: Backend CI/CD
-      branch: ${{ github.ref_name }}
-      security_result: ${{ needs.security.result }}
-      lint_result: ${{ needs.lint.result }}
-      unit_result: ${{ needs.unit-tests.result }}
-      e2e_result: ${{ needs.e2e-tests.result }}
-      build_result: ${{ needs.build.result }}
-      publish_result: ${{ needs.publish.result }}
+      status: ${{ contains(needs.*.result, 'failure') && 'failure' || contains(needs.*.result, 'cancelled') && 'cancelled' || 'success' }}
 
     secrets: inherit
