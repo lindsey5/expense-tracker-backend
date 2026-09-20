@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetTransactionsDto } from './dto/get-transaction.dto';
@@ -31,17 +35,15 @@ export class TransactionService {
       throw new NotFoundException('Wallet not found');
     }
 
+    if (wallet.balance < data.amount && data.type === 'EXPENSE') {
+      throw new BadRequestException('Insufficient wallet balance.');
+    }
+
     const transaction = await this.prisma.$transaction(async (tx) => {
       const transaction = await tx.transaction.create({
         data: {
           ...data,
-          date: new Date(
-            Date.UTC(
-              date.getUTCFullYear(),
-              date.getUTCMonth(),
-              date.getUTCDate(),
-            ),
-          ),
+          date: new Date(`${date}T00:00:00.000Z`),
           userId: id,
         },
         include: {
@@ -110,9 +112,14 @@ export class TransactionService {
         where: finalWhere,
         skip,
         take: limit,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: [
+          {
+            date: 'desc',
+          },
+          {
+            createdAt: 'desc',
+          },
+        ],
         include: {
           wallet: true,
         },
@@ -138,27 +145,32 @@ export class TransactionService {
       { month: number; year: number; monthName: string }[]
     >`
       SELECT DISTINCT
-        EXTRACT(MONTH FROM "createdAt")::int AS month,
-        EXTRACT(YEAR FROM "createdAt")::int AS year,
-        TO_CHAR("createdAt", 'Month YYYY') AS "monthName"
+        EXTRACT(MONTH FROM "date")::int AS month,
+        EXTRACT(YEAR FROM "date")::int AS year,
+        TO_CHAR("date", 'FMMonth YYYY') AS "monthName"
       FROM "Transaction"
       WHERE "userId" = ${userId}
       ORDER BY year DESC, month DESC
     `;
 
-    if (months.length === 0) {
-      const now = new Date();
+    const now = new Date();
 
-      return [
-        {
-          month: now.getMonth() + 1,
-          year: now.getFullYear(),
-          monthName: now.toLocaleString('en-US', {
-            month: 'long',
-            year: 'numeric',
-          }),
-        },
-      ];
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    const hasCurrentMonth = months.some(
+      ({ month, year }) => month === currentMonth && year === currentYear,
+    );
+
+    if (!hasCurrentMonth) {
+      months.unshift({
+        month: currentMonth,
+        year: currentYear,
+        monthName: now.toLocaleString('en-US', {
+          month: 'long',
+          year: 'numeric',
+        }),
+      });
     }
 
     return months;

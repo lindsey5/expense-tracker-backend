@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TransactionCategory } from 'generated/prisma/enums';
 import { IsEnum, IsInt, IsNumber, Max, Min } from 'class-validator';
+import { BudgetResponseDto } from '../common/budget.dto';
 
 export class CreateBudgetDto {
   @ApiProperty({
@@ -32,4 +33,12 @@ export class CreateBudgetDto {
   @IsInt()
   @Min(2000)
   year!: number;
+}
+
+export class CreateBudgetResponse {
+  @ApiProperty()
+  message!: string;
+
+  @ApiProperty()
+  budget!: BudgetResponseDto;
 }
