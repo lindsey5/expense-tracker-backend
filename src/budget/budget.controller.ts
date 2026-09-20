@@ -40,11 +40,6 @@ export class BudgetController {
     return this.budgetService.findAll(userId, query);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.budgetService.findOne(+id);
-  }
-
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'update_budget' })
