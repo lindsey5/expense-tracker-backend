@@ -24,6 +24,28 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify Dev And Main SHA Match
+        run: |
+          git fetch --no-tags origin \
+            +refs/heads/dev:refs/remotes/origin/dev \
+            +refs/heads/main:refs/remotes/origin/main
+
+          DEV_SHA="$(git rev-parse refs/remotes/origin/dev)"
+          MAIN_SHA="$(git rev-parse refs/remotes/origin/main)"
+
+          echo "dev:  ${DEV_SHA}"
+          echo "main: ${MAIN_SHA}"
+
+          if [ "$DEV_SHA" != "$MAIN_SHA" ]; then
+            echo "::error::dev and main must point to the same commit before publishing."
+            exit 1
+          fi
+
       - name: Trigger Deployment
         if: ${{ env.DEPLOY_WEBHOOK_URL != '' }}
         env:
