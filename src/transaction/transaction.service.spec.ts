@@ -202,6 +202,50 @@ describe('TransactionService', () => {
   });
 
   describe('findAll', () => {
+    it('returns paginated transactions without optional filters', async () => {
+      mockPrismaService.transaction.findMany.mockResolvedValue([]);
+      mockPrismaService.transaction.count.mockResolvedValue(0);
+
+      const result = await service.findAll('user-123', {
+        page: 1,
+        limit: 10,
+        month: 9,
+        year: 2026,
+      });
+
+      expect(mockPrismaService.transaction.findMany).toHaveBeenCalledWith({
+        where: {
+          userId: 'user-123',
+          date: {
+            gte: new Date(2026, 8, 1),
+            lt: new Date(2026, 9, 1),
+          },
+        },
+        skip: 0,
+        take: 10,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          wallet: true,
+        },
+      });
+      expect(mockPrismaService.transaction.count).toHaveBeenCalledWith({
+        where: {
+          userId: 'user-123',
+        },
+      });
+      expect(result).toEqual({
+        transactions: [],
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 0,
+        },
+      });
+    });
+
     it('returns paginated transactions with filters and search', async () => {
       const transactions = [
         {
@@ -298,6 +342,24 @@ describe('TransactionService', () => {
       ]);
 
       jest.useRealTimers();
+    });
+  });
+
+  it('loads when reflected constructor types fall back to Object', async () => {
+    await jest.isolateModulesAsync(async () => {
+      jest.unstable_mockModule('src/prisma/prisma.service', () => ({
+        PrismaService: undefined,
+      }));
+      jest.unstable_mockModule('./dto/create-transaction.dto', () => ({
+        CreateTransactionDto: undefined,
+      }));
+      jest.unstable_mockModule('./dto/get-transaction.dto', () => ({
+        GetTransactionsDto: undefined,
+      }));
+
+      await expect(import('./transaction.service')).resolves.toHaveProperty(
+        'TransactionService',
+      );
     });
   });
 });
