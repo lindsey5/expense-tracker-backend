@@ -143,4 +143,37 @@ describe('TransactionController', () => {
 
     expect(mockTransactionService.getMonths).toHaveBeenCalledWith('user-123');
   });
+
+  it('loads when reflected decorator types fall back to Object', async () => {
+    await jest.isolateModulesAsync(async () => {
+      jest.unstable_mockModule('./transaction.service', () => ({
+        TransactionService: undefined,
+      }));
+      jest.unstable_mockModule('./transaction-summary.service', () => ({
+        TransactionSummaryService: undefined,
+      }));
+      jest.unstable_mockModule('./dto/create-transaction.dto', () => ({
+        CreateTransactionDto: undefined,
+      }));
+      jest.unstable_mockModule('./dto/get-transaction.dto', () => ({
+        GetTransactionsDto: undefined,
+        GetTransactionsResponseDto: undefined,
+      }));
+      jest.unstable_mockModule('./dto/transaction.dto', () => ({
+        CreateUpdateTransactionResponse: undefined,
+        GetTransactionMonths: undefined,
+      }));
+      jest.unstable_mockModule('./dto/transaction-summary.dto', () => ({
+        GetExpensesResponseDto: undefined,
+        GetIncomesResponseDto: undefined,
+      }));
+      jest.unstable_mockModule('src/dto/common.dto', () => ({
+        DateFilter: undefined,
+      }));
+
+      await expect(import('./transaction.controller')).resolves.toHaveProperty(
+        'TransactionController',
+      );
+    });
+  });
 });

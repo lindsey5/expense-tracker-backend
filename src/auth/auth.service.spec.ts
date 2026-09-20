@@ -468,4 +468,22 @@ describe('AuthService', () => {
       });
     });
   });
+
+  it('loads when reflected constructor types fall back to Object', async () => {
+    await jest.isolateModulesAsync(async () => {
+      jest.unstable_mockModule('src/prisma/prisma.service', () => ({
+        PrismaService: undefined,
+      }));
+      jest.unstable_mockModule('@nestjs/jwt', () => ({
+        JwtService: undefined,
+      }));
+      jest.unstable_mockModule('src/email/email.service', () => ({
+        EmailService: undefined,
+      }));
+
+      await expect(import('./auth.service')).resolves.toHaveProperty(
+        'AuthService',
+      );
+    });
+  });
 });
