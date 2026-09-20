@@ -1,0 +1,36 @@
+name: Backend Publish
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        required: true
+        type: string
+
+    secrets:
+      PRODUCTION_DEPLOY_WEBHOOK_URL:
+        required: false
+
+permissions:
+  contents: read
+
+env:
+  DEPLOY_WEBHOOK_URL: ${{ secrets.PRODUCTION_DEPLOY_WEBHOOK_URL }}
+
+jobs:
+  publish:
+    name: Deploy Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Trigger Deployment
+        if: ${{ env.DEPLOY_WEBHOOK_URL != '' }}
+        env:
+          DEPLOY_WEBHOOK_URL: ${{ secrets.PRODUCTION_DEPLOY_WEBHOOK_URL }}
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --data "{\"image\":\"${{ inputs.image }}\",\"sha\":\"${{ github.sha }}\"}" \
+            "$DEPLOY_WEBHOOK_URL"

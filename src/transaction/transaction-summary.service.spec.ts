@@ -86,4 +86,16 @@ describe('TransactionSummaryService', () => {
       hasPreviousMonth: false,
     });
   });
+
+  it('loads when reflected constructor types fall back to Object', async () => {
+    await jest.isolateModulesAsync(async () => {
+      jest.unstable_mockModule('src/prisma/prisma.service', () => ({
+        PrismaService: undefined,
+      }));
+
+      await expect(
+        import('./transaction-summary.service'),
+      ).resolves.toHaveProperty('TransactionSummaryService');
+    });
+  });
 });

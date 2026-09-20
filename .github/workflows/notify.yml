@@ -1,0 +1,61 @@
+name: Backend Notify
+
+on:
+  workflow_call:
+    inputs:
+      pipeline_name:
+        required: true
+        type: string
+
+      status:
+        required: true
+        type: string
+
+    secrets:
+      TELEGRAM_BOT_TOKEN:
+        required: false
+
+      TELEGRAM_CHAT_ID:
+        required: false
+
+jobs:
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      PIPELINE_STATUS: ${{ inputs.status }}
+
+    steps:
+      - name: Send Telegram Notification
+        if: ${{ env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != '' }}
+        run: |
+          if [ "$PIPELINE_STATUS" = "success" ]; then
+            ICON="✅"
+            STATUS="SUCCESS"
+          elif [ "$PIPELINE_STATUS" = "cancelled" ]; then
+            ICON="⚠️"
+            STATUS="CANCELLED"
+          else
+            ICON="❌"
+            STATUS="FAILED"
+          fi
+
+          MESSAGE="$ICON ${{ inputs.pipeline_name }}: $STATUS
+
+          Repository: ${{ github.repository }}
+          Branch: ${{ github.ref_name }}
+          Actor: ${{ github.actor }}
+
+          Commit: ${{ github.sha }}
+
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          curl --fail --silent --show-error \
+            --request POST \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${MESSAGE}"
