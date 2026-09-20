@@ -75,4 +75,12 @@ export class TransactionController {
   getMonths(@CurrentUserId() userId: string) {
     return this.transactionService.getMonths(userId);
   }
+
+  @Get('recent')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'list_transaction_recent' })
+  @ApiOkResponse({ type: [GetTransactionsResponseDto['transactions']] })
+  getRecent(@CurrentUserId() userId: string) {
+    return this.transactionService.getRecent(userId);
+  }
 }
