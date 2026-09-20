@@ -12,6 +12,7 @@ permissions:
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}
+  DEPLOY_WEBHOOK_URL: ${{ secrets.PRODUCTION_DEPLOY_WEBHOOK_URL }}
 
 jobs:
   publish:
@@ -54,7 +55,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Trigger Deployment
-        if: ${{ secrets.PRODUCTION_DEPLOY_WEBHOOK_URL != '' }}
+        if: ${{ env.DEPLOY_WEBHOOK_URL != '' }}
         env:
           DEPLOY_WEBHOOK_URL: ${{ secrets.PRODUCTION_DEPLOY_WEBHOOK_URL }}
         run: |
