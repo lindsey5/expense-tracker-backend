@@ -115,10 +115,6 @@ export class BudgetService {
     return result;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} budget.`;
-  }
-
   async update(id: string, userId: string, updateBudgetDto: UpdateBudgetDto) {
     const budget = await this.prisma.budget.findUnique({
       where: { id },
