@@ -11,6 +11,7 @@ import {
 import {
   CreateUpdateTransactionResponse,
   GetTransactionMonths,
+  TransactionResponseDto,
 } from './dto/transaction.dto';
 import { TransactionSummaryService } from './transaction-summary.service';
 import {
@@ -79,7 +80,7 @@ export class TransactionController {
   @Get('recent')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'list_transaction_recent' })
-  @ApiOkResponse({ type: [GetTransactionsResponseDto['transactions']] })
+  @ApiOkResponse({ type: [TransactionResponseDto] })
   getRecent(@CurrentUserId() userId: string) {
     return this.transactionService.getRecent(userId);
   }
