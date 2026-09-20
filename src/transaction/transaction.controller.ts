@@ -10,7 +10,6 @@ import {
 } from './dto/get-transaction.dto';
 import {
   CreateUpdateTransactionResponse,
-  GetTransactionMonths,
   TransactionResponseDto,
 } from './dto/transaction.dto';
 import { TransactionSummaryService } from './transaction-summary.service';
@@ -19,6 +18,7 @@ import {
   GetIncomesResponseDto,
 } from './dto/transaction-summary.dto';
 import { DateFilter } from 'src/dto/common.dto';
+import { GetMonths } from 'src/common/dto/month.dto';
 
 @Controller('transaction')
 export class TransactionController {
@@ -72,7 +72,7 @@ export class TransactionController {
   @Get('months')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'list_transaction_months' })
-  @ApiOkResponse({ type: [GetTransactionMonths] })
+  @ApiOkResponse({ type: [GetMonths] })
   getMonths(@CurrentUserId() userId: string) {
     return this.transactionService.getMonths(userId);
   }

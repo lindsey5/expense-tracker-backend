@@ -112,9 +112,14 @@ export class TransactionService {
         where: finalWhere,
         skip,
         take: limit,
-        orderBy: {
-          date: 'desc',
-        },
+        orderBy: [
+          {
+            date: 'desc',
+          },
+          {
+            createdAt: 'desc',
+          },
+        ],
         include: {
           wallet: true,
         },

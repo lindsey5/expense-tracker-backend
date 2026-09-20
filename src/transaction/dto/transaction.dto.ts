@@ -41,14 +41,3 @@ export class CreateUpdateTransactionResponse {
   @ApiProperty({ type: TransactionResponseDto })
   transaction!: TransactionResponseDto;
 }
-
-export class GetTransactionMonths {
-  @ApiProperty()
-  month!: number;
-
-  @ApiProperty()
-  year!: number;
-
-  @ApiProperty()
-  monthName!: string;
-}

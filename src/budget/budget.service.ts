@@ -7,7 +7,7 @@ import {
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { BudgetStatus, GetBudgetQueryDto } from './dto/get-budget.dto';
+import { BudgetStatus, GetBudgetsQueryDto } from './dto/get-budget.dto';
 
 @Injectable()
 export class BudgetService {
@@ -33,7 +33,7 @@ export class BudgetService {
       );
     }
 
-    return this.prisma.budget.create({
+    const budget = this.prisma.budget.create({
       data: {
         userId,
         category,
@@ -42,9 +42,14 @@ export class BudgetService {
         year,
       },
     });
+
+    return {
+      message: "Budget successfully created.",
+      budget
+    }
   }
 
-  async findAll(userId: string, query: GetBudgetQueryDto) {
+  async findAll(userId: string, query: GetBudgetsQueryDto) {
     const { month, year, status } = query;
     const budgets = await this.prisma.budget.findMany({
       where: {
@@ -86,7 +91,7 @@ export class BudgetService {
     );
 
     const result = budgets.map((budget) => {
-      const amount = Number(budget.amount);
+      const amount = budget.amount;
       const spent = expenseMap.get(budget.category) ?? 0;
       const remaining = amount - spent;
       const percentage = amount > 0 ? (spent / amount) * 100 : 0;
@@ -109,10 +114,14 @@ export class BudgetService {
     });
 
     if (status) {
-      return result.filter((budget) => budget.status === status);
+      return {
+        budgets: result.filter((budget) => budget.status === status)
+      }
     }
 
-    return result;
+    return {
+      budgets: result
+    };
   }
 
   async update(id: string, userId: string, updateBudgetDto: UpdateBudgetDto) {
@@ -151,5 +160,95 @@ export class BudgetService {
     await this.prisma.budget.delete({ where: { id } });
 
     return { message: 'Budget successfully removed.' };
+  }
+
+  async getMonths(userId: string) {
+    const months = await this.prisma.$queryRaw<
+      { month: number; year: number; monthName: string }[]
+    >`
+      SELECT DISTINCT
+        EXTRACT(MONTH FROM "createdAt")::int AS month,
+        EXTRACT(YEAR FROM "createdAt")::int AS year,
+        TO_CHAR("createdAt", 'FMMonth YYYY') AS "monthName"
+      FROM "Budget"
+      WHERE "userId" = ${userId}
+      ORDER BY year DESC, month DESC
+    `;
+
+    const now = new Date();
+
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    const hasCurrentMonth = months.some(
+      ({ month, year }) => month === currentMonth && year === currentYear,
+    );
+
+    if (!hasCurrentMonth) {
+      months.unshift({
+        month: currentMonth,
+        year: currentYear,
+        monthName: now.toLocaleString('en-US', {
+          month: 'long',
+          year: 'numeric',
+        }),
+      });
+    }
+
+    return months;
+  }
+
+  async monthlyBudget(
+    userId: string,
+    month?: number,
+    year?: number,
+  ) {
+    const now = new Date();
+
+    const selectedMonth = month ?? now.getMonth() + 1;
+    const selectedYear = year ?? now.getFullYear();
+
+    const monthlyBudget = await this.prisma.budget.aggregate({
+      where: {
+        userId,
+        month: selectedMonth,
+        year: selectedYear,
+      },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    const expenses = await this.prisma.transaction.aggregate({
+      where: {
+        userId,
+        type: 'EXPENSE',
+        date: {
+          gte: new Date(selectedYear, selectedMonth - 1, 1),
+          lt: new Date(selectedYear, selectedMonth, 1),
+        },
+      },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    const totalBudget = monthlyBudget._sum.amount ?? 0;
+    const spending = expenses._sum.amount ?? 0;
+    const remaining = totalBudget - spending;
+
+    const percentage =
+      totalBudget > 0
+        ? (spending / totalBudget) * 100
+        : 0;
+
+    return {
+      month: selectedMonth,
+      year: selectedYear,
+      totalBudget,
+      spending,
+      remaining,
+      percentage,
+    };
   }
 }
