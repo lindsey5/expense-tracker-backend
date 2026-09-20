@@ -20,7 +20,7 @@ export class TransactionSummaryService {
         where: {
           userId,
           type,
-          createdAt: {
+          date: {
             gte: startOfThisMonth,
             lt: startOfNextMonth,
           },
@@ -31,7 +31,7 @@ export class TransactionSummaryService {
         where: {
           userId,
           type,
-          createdAt: {
+          date: {
             gte: startOfLastMonth,
             lt: startOfThisMonth,
           },

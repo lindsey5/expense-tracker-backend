@@ -60,7 +60,7 @@ describe('TransactionService', () => {
       category: salaryCategory,
       amount: 5000,
       title: 'Monthly Salary',
-      date: new Date('2026-09-19T10:30:00.000Z'),
+      date: '2026-09-19',
     };
 
     it('throws when the wallet does not exist for the user', async () => {
@@ -144,7 +144,7 @@ describe('TransactionService', () => {
         category: foodCategory,
         amount: 1000,
         title: 'Dinner',
-        date: new Date('2026-09-19T10:30:00.000Z'),
+        date: '2026-09-19',
       };
       const wallet = {
         id: 'wallet-123',
@@ -224,7 +224,7 @@ describe('TransactionService', () => {
         skip: 0,
         take: 10,
         orderBy: {
-          createdAt: 'desc',
+          date: 'desc',
         },
         include: {
           wallet: true,
@@ -285,7 +285,7 @@ describe('TransactionService', () => {
         skip: 10,
         take: 10,
         orderBy: {
-          createdAt: 'desc',
+          date: 'desc',
         },
         include: {
           wallet: true,

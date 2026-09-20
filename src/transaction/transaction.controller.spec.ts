@@ -162,6 +162,7 @@ describe('TransactionController', () => {
       jest.unstable_mockModule('./dto/transaction.dto', () => ({
         CreateUpdateTransactionResponse: undefined,
         GetTransactionMonths: undefined,
+        TransactionResponseDto: undefined,
       }));
       jest.unstable_mockModule('./dto/transaction-summary.dto', () => ({
         GetExpensesResponseDto: undefined,

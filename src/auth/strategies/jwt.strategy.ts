@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-jwt';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 type JwtPayload = { sub: string; email: string };
 
@@ -25,7 +26,10 @@ const jwtFromBearerToken = (req?: JwtRequest): string | null => {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     super({
       jwtFromRequest: jwtFromBearerToken,
@@ -33,7 +37,16 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  validate(payload: JwtPayload): JwtPayload {
+  async validate(payload: JwtPayload): Promise<JwtPayload> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User does not exist.');
+    }
+
     return payload;
   }
 }

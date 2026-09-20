@@ -8,6 +8,7 @@ import { AuthService } from './auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { EmailService } from 'src/email/email.service';
 import { JwtAuthGuard } from './guards/JwtAuthGuard';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [
@@ -30,7 +31,13 @@ import { JwtAuthGuard } from './guards/JwtAuthGuard';
 
   controllers: [AuthController],
 
-  providers: [AuthService, PrismaService, EmailService, JwtAuthGuard],
+  providers: [
+    AuthService,
+    PrismaService,
+    EmailService,
+    JwtAuthGuard,
+    JwtStrategy,
+  ],
 
   exports: [AuthService, JwtAuthGuard, PassportModule],
 })
