@@ -38,17 +38,23 @@ jobs:
     uses: ./.github/workflows/e2e-tests.yml
     secrets: inherit
 
+  smoke-tests:
+    uses: ./.github/workflows/smoke-tests.yml
+    secrets: inherit
+
   build:
     needs:
       - security
       - lint
       - unit-tests
       - e2e-tests
+      - smoke-tests
 
     if: >
       always() &&
       needs.lint.result == 'success' &&
       needs.unit-tests.result == 'success' &&
+      needs.smoke-tests.result == 'success' &&
       (needs.security.result == 'success' || needs.security.result == 'skipped') &&
       (needs.e2e-tests.result == 'success' || needs.e2e-tests.result == 'skipped')
 
@@ -64,6 +70,8 @@ jobs:
       needs.build.result == 'success'
 
     uses: ./.github/workflows/publish.yml
+    with:
+      image: ${{ needs.build.outputs.image }}
     secrets: inherit
 
   notify:
@@ -72,6 +80,7 @@ jobs:
       - lint
       - unit-tests
       - e2e-tests
+      - smoke-tests
       - build
       - publish
 
