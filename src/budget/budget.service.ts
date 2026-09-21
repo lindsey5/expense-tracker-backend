@@ -199,11 +199,7 @@ export class BudgetService {
     return months;
   }
 
-  async monthlyBudget(
-    userId: string,
-    month?: number,
-    year?: number,
-  ) {
+  async monthlyBudget(userId: string, month?: number, year?: number) {
     const now = new Date();
 
     const selectedMonth = month ?? now.getMonth() + 1;
@@ -238,10 +234,7 @@ export class BudgetService {
     const spending = expenses._sum.amount ?? 0;
     const remaining = totalBudget - spending;
 
-    const percentage =
-      totalBudget > 0
-        ? (spending / totalBudget) * 100
-        : 0;
+    const percentage = totalBudget > 0 ? (spending / totalBudget) * 100 : 0;
 
     return {
       month: selectedMonth,
