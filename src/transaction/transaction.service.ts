@@ -177,17 +177,22 @@ export class TransactionService {
   }
 
   async getRecent(userId: string) {
-    const transaction = await this.prisma.transaction.findMany({
+    const transactions = await this.prisma.transaction.findMany({
       where: { userId },
       take: 5,
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: [
+        {
+          date: 'desc',
+        },
+        {
+          createdAt: 'desc',
+        },
+      ],
       include: {
         wallet: true,
       },
     });
 
-    return transaction;
+    return transactions;
   }
 }

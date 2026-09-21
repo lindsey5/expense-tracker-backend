@@ -11,13 +11,16 @@ import {
 } from '@nestjs/common';
 import { BudgetService } from './budget.service';
 import { CreateBudgetDto, CreateBudgetResponse } from './dto/create-budget.dto';
-import { UpdateBudgetDto } from './dto/update-budget.dto';
+import { UpdateBudgetDto, UpdateBudgetResponse } from './dto/update-budget.dto';
 import { JwtAuthGuard } from 'src/auth/guards/JwtAuthGuard';
 import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { CurrentUserId } from 'src/common/decorator/current-user.decorator';
 import { GetBudgetsQueryDto, GetBudgetsResponse } from './dto/get-budget.dto';
 import { GetMonths } from 'src/common/dto/month.dto';
-import { GetMonthlyBudgetQueryDto, GetMonthlyBudgetResponse } from './dto/get-monthly-budget.dto';
+import {
+  GetMonthlyBudgetQueryDto,
+  GetMonthlyBudgetResponse,
+} from './dto/get-monthly-budget.dto';
 
 @Controller('budget')
 export class BudgetController {
@@ -45,6 +48,7 @@ export class BudgetController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'update_budget' })
+  @ApiOkResponse({ type: UpdateBudgetResponse })
   update(
     @Param('id') id: string,
     @Body() updateBudgetDto: UpdateBudgetDto,
@@ -74,12 +78,12 @@ export class BudgetController {
   @ApiOkResponse({ type: GetMonthlyBudgetResponse })
   getMonthlyBudget(
     @CurrentUserId() userId: string,
-    @Query() monthlyBudgetQuery: GetMonthlyBudgetQueryDto
+    @Query() monthlyBudgetQuery: GetMonthlyBudgetQueryDto,
   ) {
     return this.budgetService.monthlyBudget(
       userId,
       monthlyBudgetQuery.month,
-      monthlyBudgetQuery.year
-    )
+      monthlyBudgetQuery.year,
+    );
   }
 }
