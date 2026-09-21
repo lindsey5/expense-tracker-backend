@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { BudgetService } from './budget.service';
 import { CreateBudgetDto, CreateBudgetResponse } from './dto/create-budget.dto';
-import { UpdateBudgetDto } from './dto/update-budget.dto';
+import { UpdateBudgetDto, UpdateBudgetResponse } from './dto/update-budget.dto';
 import { JwtAuthGuard } from 'src/auth/guards/JwtAuthGuard';
 import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { CurrentUserId } from 'src/common/decorator/current-user.decorator';
@@ -45,6 +45,7 @@ export class BudgetController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'update_budget' })
+  @ApiOkResponse({ type: UpdateBudgetResponse })
   update(
     @Param('id') id: string,
     @Body() updateBudgetDto: UpdateBudgetDto,

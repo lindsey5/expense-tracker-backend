@@ -8,7 +8,7 @@ type JwtPayload = { sub: string; email: string };
 
 type JwtRequest = { headers?: { authorization?: string } };
 
-const jwtFromBearerToken = (req?: JwtRequest): string | null => {
+export const jwtFromBearerToken = (req?: JwtRequest): string | null => {
   const authHeader = req?.headers?.authorization;
 
   if (typeof authHeader !== 'string') {
