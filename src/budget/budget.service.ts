@@ -44,83 +44,104 @@ export class BudgetService {
     });
 
     return {
-      message: "Budget successfully created.",
-      budget
-    }
+      message: 'Budget successfully created.',
+      budget,
+    };
   }
 
   async findAll(userId: string, query: GetBudgetsQueryDto) {
     const { month, year, status } = query;
-    const budgets = await this.prisma.budget.findMany({
-      where: {
-        userId,
-        month,
-        year,
-      },
-    });
 
-    if (budgets.length === 0) {
-      return [];
-    }
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
 
-    const categories = budgets.map((budget) => budget.category);
+    const budgets = await this.prisma.$queryRaw<any[]>`
+      SELECT
+        b.id,
+        b."userId",
+        b.category,
+        b.amount,
+        b.month,
+        b.year,
+        b."createdAt",
+        b."updatedAt",
 
-    const expenses = await this.prisma.transaction.groupBy({
-      by: ['category'],
-      where: {
-        userId,
-        type: 'EXPENSE',
-        category: {
-          in: categories,
-        },
-        date: {
-          gte: new Date(year, month - 1, 1),
-          lt: new Date(year, month, 1),
-        },
-      },
-      _sum: {
-        amount: true,
-      },
-    });
+        COALESCE(SUM(t.amount), 0) AS spent
 
-    const expenseMap = new Map(
-      expenses.map((expense) => [
-        expense.category,
-        Number(expense._sum.amount ?? 0),
-      ]),
-    );
+      FROM "Budget" b
 
-    const result = budgets.map((budget) => {
-      const amount = budget.amount;
-      const spent = expenseMap.get(budget.category) ?? 0;
-      const remaining = amount - spent;
-      const percentage = amount > 0 ? (spent / amount) * 100 : 0;
+      LEFT JOIN "Transaction" t
+        ON t."userId" = b."userId"
+        AND t.category = b.category
+        AND t.type = 'EXPENSE'
+        AND t.date >= ${startDate}
+        AND t.date < ${endDate}
 
-      const budgetStatus: BudgetStatus =
-        percentage > 100
-          ? ('EXCEEDED' as unknown as BudgetStatus)
-          : percentage >= 80
-            ? ('WARNING' as unknown as BudgetStatus)
-            : ('ON_TRACK' as unknown as BudgetStatus);
+      WHERE b."userId" = ${userId}
+        AND b.month = ${month}
+        AND b.year = ${year}
 
-      return {
-        ...budget,
-        amount,
-        spent,
-        remaining,
-        percentage: Number(percentage.toFixed(2)),
-        status: budgetStatus,
-      };
-    });
+      GROUP BY
+        b.id,
+        b."userId",
+        b.category,
+        b.amount,
+        b.month,
+        b.year,
+        b."createdAt",
+        b."updatedAt"
 
-    if (status) {
-      return {
-        budgets: result.filter((budget) => budget.status === status)
-      }
-    }
+      ORDER BY b.category
+    `;
+
+    type BudgetRow = {
+      id: string;
+      userId: string;
+      category: string;
+      amount: string | number;
+      spent: string | number;
+      month: number;
+      year: number;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+
+    type BudgetSummary = BudgetRow & {
+      amount: number;
+      spent: number;
+      remaining: number;
+      percentage: number;
+      status: BudgetStatus;
+    };
+
+    const result: BudgetSummary[] = (budgets as BudgetRow[])
+      .map((budget: BudgetRow): BudgetSummary => {
+        const amount = Number(budget.amount);
+        const spent = Number(budget.spent);
+
+        const remaining = amount - spent;
+        const percentage = amount > 0 ? (spent / amount) * 100 : 0;
+
+        const budgetStatus: BudgetStatus =
+          percentage > 100
+            ? BudgetStatus.EXCEEDED
+            : percentage >= 80
+              ? BudgetStatus.WARNING
+              : BudgetStatus.ON_TRACK;
+
+        return {
+          ...budget,
+          amount,
+          spent,
+          remaining,
+          percentage: Number(percentage.toFixed(2)),
+          status: budgetStatus,
+        };
+      })
+      .filter((budget: BudgetSummary) => !status || budget.status === status);
 
     return {
-      budgets: result
+      budgets: result,
     };
   }
 
@@ -198,11 +219,7 @@ export class BudgetService {
     return months;
   }
 
-  async monthlyBudget(
-    userId: string,
-    month?: number,
-    year?: number,
-  ) {
+  async monthlyBudget(userId: string, month?: number, year?: number) {
     const now = new Date();
 
     const selectedMonth = month ?? now.getMonth() + 1;
@@ -237,10 +254,7 @@ export class BudgetService {
     const spending = expenses._sum.amount ?? 0;
     const remaining = totalBudget - spending;
 
-    const percentage =
-      totalBudget > 0
-        ? (spending / totalBudget) * 100
-        : 0;
+    const percentage = totalBudget > 0 ? (spending / totalBudget) * 100 : 0;
 
     return {
       month: selectedMonth,

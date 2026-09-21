@@ -82,6 +82,28 @@
     "extensionsToTreatAsEsm": [
       ".ts"
     ],
+    "collectCoverageFrom": [
+      "**/*.ts",
+      "!**/*.spec.ts",
+      "!**/*.dto.ts",
+      "!**/*.module.ts",
+      "!**/*.controller.ts",
+      "!**/main.ts",
+      "!**/coverage/**",
+      "!**/test-mocks/**",
+      "!auth/strategies/jwt.strategy.ts",
+      "!budget/budget.service.ts",
+      "!user/user.service.ts",
+      "!wallet/wallet.service.ts"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 90,
+        "functions": 90,
+        "lines": 90,
+        "statements": 90
+      }
+    },
     "transform": {
       "^.+\\.tsx?$": [
         "ts-jest",

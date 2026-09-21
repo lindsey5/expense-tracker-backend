@@ -223,9 +223,14 @@ describe('TransactionService', () => {
         },
         skip: 0,
         take: 10,
-        orderBy: {
-          date: 'desc',
-        },
+        orderBy: [
+          {
+            date: 'desc',
+          },
+          {
+            createdAt: 'desc',
+          },
+        ],
         include: {
           wallet: true,
         },
@@ -284,9 +289,14 @@ describe('TransactionService', () => {
         },
         skip: 10,
         take: 10,
-        orderBy: {
-          date: 'desc',
-        },
+        orderBy: [
+          {
+            date: 'desc',
+          },
+          {
+            createdAt: 'desc',
+          },
+        ],
         include: {
           wallet: true,
         },
@@ -309,6 +319,40 @@ describe('TransactionService', () => {
           limit: 10,
           total: 25,
           totalPages: 3,
+        },
+      });
+    });
+  });
+
+  describe('getRecent', () => {
+    it('returns the five most recent transactions ordered by date and creation time', async () => {
+      const transactions = [
+        {
+          id: 'transaction-123',
+          title: 'Dinner',
+          amount: 1000,
+          wallet: { id: 'wallet-123' },
+        },
+      ];
+
+      mockPrismaService.transaction.findMany.mockResolvedValue(transactions);
+
+      await expect(service.getRecent('user-123')).resolves.toEqual(
+        transactions,
+      );
+      expect(mockPrismaService.transaction.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-123' },
+        take: 5,
+        orderBy: [
+          {
+            date: 'desc',
+          },
+          {
+            createdAt: 'desc',
+          },
+        ],
+        include: {
+          wallet: true,
         },
       });
     });
