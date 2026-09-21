@@ -9,7 +9,21 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { BudgetService } from './budget.service';
 import { BudgetStatus } from './dto/get-budget.dto';
 
-const mockPrismaService = {
+const dateMatcher = expect.any(Date) as Date;
+
+const mockPrismaService: {
+  budget: {
+    findUnique: jest.Mock;
+    create: jest.Mock;
+    update: jest.Mock;
+    delete: jest.Mock;
+    aggregate: jest.Mock;
+  };
+  transaction: {
+    aggregate: jest.Mock;
+  };
+  $queryRaw: jest.Mock;
+} = {
   budget: {
     findUnique: jest.fn(),
     create: jest.fn(),
@@ -112,7 +126,17 @@ describe('BudgetService', () => {
   });
 
   it('returns monthly budgets with the matching status filter', async () => {
-    mockPrismaService.$queryRaw.mockResolvedValue([
+    const budgetRows: Array<{
+      id: string;
+      userId: string;
+      category: string;
+      amount: string;
+      spent: string;
+      month: number;
+      year: number;
+      createdAt: Date;
+      updatedAt: Date;
+    }> = [
       {
         id: 'budget-1',
         userId: 'user-123',
@@ -135,7 +159,9 @@ describe('BudgetService', () => {
         createdAt: new Date('2026-09-01T00:00:00.000Z'),
         updatedAt: new Date('2026-09-01T00:00:00.000Z'),
       },
-    ]);
+    ];
+
+    mockPrismaService.$queryRaw.mockResolvedValue(budgetRows);
 
     const result = await service.findAll('user-123', {
       month: 9,
@@ -156,15 +182,25 @@ describe('BudgetService', () => {
           status: BudgetStatus.WARNING,
           month: 9,
           year: 2026,
-          createdAt: expect.any(Date),
-          updatedAt: expect.any(Date),
+          createdAt: dateMatcher,
+          updatedAt: dateMatcher,
         },
       ],
     });
   });
 
   it('classifies budgets into on track, warning and exceeded states without a status filter', async () => {
-    mockPrismaService.$queryRaw.mockResolvedValue([
+    const budgetRows: Array<{
+      id: string;
+      userId: string;
+      category: string;
+      amount: string;
+      spent: string;
+      month: number;
+      year: number;
+      createdAt: Date;
+      updatedAt: Date;
+    }> = [
       {
         id: 'budget-1',
         userId: 'user-123',
@@ -198,7 +234,9 @@ describe('BudgetService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       },
-    ]);
+    ];
+
+    mockPrismaService.$queryRaw.mockResolvedValue(budgetRows);
 
     await expect(
       service.findAll('user-123', { month: 9, year: 2026 }),
@@ -215,8 +253,8 @@ describe('BudgetService', () => {
           status: BudgetStatus.EXCEEDED,
           month: 9,
           year: 2026,
-          createdAt: expect.any(Date),
-          updatedAt: expect.any(Date),
+          createdAt: dateMatcher,
+          updatedAt: dateMatcher,
         },
         {
           id: 'budget-2',
@@ -229,8 +267,8 @@ describe('BudgetService', () => {
           status: BudgetStatus.WARNING,
           month: 9,
           year: 2026,
-          createdAt: expect.any(Date),
-          updatedAt: expect.any(Date),
+          createdAt: dateMatcher,
+          updatedAt: dateMatcher,
         },
         {
           id: 'budget-3',
@@ -243,8 +281,8 @@ describe('BudgetService', () => {
           status: BudgetStatus.ON_TRACK,
           month: 9,
           year: 2026,
-          createdAt: expect.any(Date),
-          updatedAt: expect.any(Date),
+          createdAt: dateMatcher,
+          updatedAt: dateMatcher,
         },
       ],
     });

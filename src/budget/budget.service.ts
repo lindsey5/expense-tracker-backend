@@ -94,8 +94,28 @@ export class BudgetService {
       ORDER BY b.category
     `;
 
-    const result = budgets
-      .map((budget) => {
+    type BudgetRow = {
+      id: string;
+      userId: string;
+      category: string;
+      amount: string | number;
+      spent: string | number;
+      month: number;
+      year: number;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+
+    type BudgetSummary = BudgetRow & {
+      amount: number;
+      spent: number;
+      remaining: number;
+      percentage: number;
+      status: BudgetStatus;
+    };
+
+    const result: BudgetSummary[] = (budgets as BudgetRow[])
+      .map((budget: BudgetRow): BudgetSummary => {
         const amount = Number(budget.amount);
         const spent = Number(budget.spent);
 
@@ -118,7 +138,7 @@ export class BudgetService {
           status: budgetStatus,
         };
       })
-      .filter((budget) => !status || budget.status === status);
+      .filter((budget: BudgetSummary) => !status || budget.status === status);
 
     return {
       budgets: result,

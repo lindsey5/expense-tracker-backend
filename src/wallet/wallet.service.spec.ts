@@ -1,13 +1,24 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { jest } from '@jest/globals';
+import { WalletType } from 'generated/prisma/enums';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { WalletService } from './wallet.service';
 
 describe('WalletService', () => {
   let service: WalletService;
 
-  const mockPrismaService = {
+  const mockPrismaService: {
+    wallet: {
+      findFirst: jest.Mock;
+      create: jest.Mock;
+      findMany: jest.Mock;
+      count: jest.Mock;
+      aggregate: jest.Mock;
+      findUnique: jest.Mock;
+      update: jest.Mock;
+    };
+  } = {
     wallet: {
       findFirst: jest.fn(),
       create: jest.fn(),
@@ -41,7 +52,7 @@ describe('WalletService', () => {
     await expect(
       service.create('user-123', {
         name: 'Cash',
-        type: 'E_WALLET' as any,
+        type: WalletType.E_WALLET,
         balance: 100,
       }),
     ).rejects.toThrow(ConflictException);
@@ -62,7 +73,7 @@ describe('WalletService', () => {
     await expect(
       service.create('user-123', {
         name: 'Cash',
-        type: 'E_WALLET' as any,
+        type: WalletType.E_WALLET,
         balance: 100,
       }),
     ).resolves.toEqual({
