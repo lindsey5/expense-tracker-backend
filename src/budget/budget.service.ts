@@ -44,9 +44,9 @@ export class BudgetService {
     });
 
     return {
-      message: "Budget successfully created.",
-      budget
-    }
+      message: 'Budget successfully created.',
+      budget,
+    };
   }
 
   async findAll(userId: string, query: GetBudgetsQueryDto) {
@@ -120,62 +120,8 @@ export class BudgetService {
       })
       .filter((budget) => !status || budget.status === status);
 
-    const expenses = await this.prisma.transaction.groupBy({
-      by: ['category'],
-      where: {
-        userId,
-        type: 'EXPENSE',
-        category: {
-          in: categories,
-        },
-        date: {
-          gte: new Date(year, month - 1, 1),
-          lt: new Date(year, month, 1),
-        },
-      },
-      _sum: {
-        amount: true,
-      },
-    });
-
-    const expenseMap = new Map(
-      expenses.map((expense) => [
-        expense.category,
-        Number(expense._sum.amount ?? 0),
-      ]),
-    );
-
-    const result = budgets.map((budget) => {
-      const amount = budget.amount;
-      const spent = expenseMap.get(budget.category) ?? 0;
-      const remaining = amount - spent;
-      const percentage = amount > 0 ? (spent / amount) * 100 : 0;
-
-      const budgetStatus: BudgetStatus =
-        percentage > 100
-          ? ('EXCEEDED' as unknown as BudgetStatus)
-          : percentage >= 80
-            ? ('WARNING' as unknown as BudgetStatus)
-            : ('ON_TRACK' as unknown as BudgetStatus);
-
-      return {
-        ...budget,
-        amount,
-        spent,
-        remaining,
-        percentage: Number(percentage.toFixed(2)),
-        status: budgetStatus,
-      };
-    });
-
-    if (status) {
-      return {
-        budgets: result.filter((budget) => budget.status === status)
-      }
-    }
-
     return {
-      budgets: result
+      budgets: result,
     };
   }
 

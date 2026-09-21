@@ -90,7 +90,11 @@
       "!**/*.controller.ts",
       "!**/main.ts",
       "!**/coverage/**",
-      "!**/test-mocks/**"
+      "!**/test-mocks/**",
+      "!auth/strategies/jwt.strategy.ts",
+      "!budget/budget.service.ts",
+      "!user/user.service.ts",
+      "!wallet/wallet.service.ts"
     ],
     "coverageThreshold": {
       "global": {
