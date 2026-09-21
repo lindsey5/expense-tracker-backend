@@ -39,7 +39,11 @@ describe('WalletService', () => {
     mockPrismaService.wallet.findFirst.mockResolvedValue({ id: 'wallet-1' });
 
     await expect(
-      service.create('user-123', { name: 'Cash', type: 'E_WALLET' as any, balance: 100 }),
+      service.create('user-123', {
+        name: 'Cash',
+        type: 'E_WALLET' as any,
+        balance: 100,
+      }),
     ).rejects.toThrow(ConflictException);
   });
 
@@ -56,7 +60,11 @@ describe('WalletService', () => {
     mockPrismaService.wallet.create.mockResolvedValue(createdWallet);
 
     await expect(
-      service.create('user-123', { name: 'Cash', type: 'E_WALLET' as any, balance: 100 }),
+      service.create('user-123', {
+        name: 'Cash',
+        type: 'E_WALLET' as any,
+        balance: 100,
+      }),
     ).resolves.toEqual({
       wallet: createdWallet,
       message: 'Wallet successfully added',
@@ -72,7 +80,9 @@ describe('WalletService', () => {
 
   it('returns total wallet count and balance', async () => {
     mockPrismaService.wallet.count.mockResolvedValue(2);
-    mockPrismaService.wallet.aggregate.mockResolvedValue({ _sum: { balance: 2500 } });
+    mockPrismaService.wallet.aggregate.mockResolvedValue({
+      _sum: { balance: 2500 },
+    });
 
     await expect(service.getTotalBalance('user-123')).resolves.toEqual({
       totalWallets: 2,
@@ -100,10 +110,12 @@ describe('WalletService', () => {
     mockPrismaService.wallet.findUnique.mockResolvedValue({ id: 'wallet-1' });
     mockPrismaService.wallet.update.mockResolvedValue(updatedWallet);
 
-    await expect(service.update('wallet-1', { balance: 250 })).resolves.toEqual({
-      wallet: updatedWallet,
-      message: 'Wallet updated successfully',
-    });
+    await expect(service.update('wallet-1', { balance: 250 })).resolves.toEqual(
+      {
+        wallet: updatedWallet,
+        message: 'Wallet updated successfully',
+      },
+    );
   });
 
   it('returns a placeholder removal message', () => {

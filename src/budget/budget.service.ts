@@ -44,9 +44,9 @@ export class BudgetService {
     });
 
     return {
-      message: "Budget successfully created.",
-      budget
-    }
+      message: 'Budget successfully created.',
+      budget,
+    };
   }
 
   async findAll(userId: string, query: GetBudgetsQueryDto) {
@@ -100,9 +100,7 @@ export class BudgetService {
         const spent = Number(budget.spent);
 
         const remaining = amount - spent;
-        const percentage = amount > 0
-          ? (spent / amount) * 100
-          : 0;
+        const percentage = amount > 0 ? (spent / amount) * 100 : 0;
 
         const budgetStatus: BudgetStatus =
           percentage > 100
@@ -201,11 +199,7 @@ export class BudgetService {
     return months;
   }
 
-  async monthlyBudget(
-    userId: string,
-    month?: number,
-    year?: number,
-  ) {
+  async monthlyBudget(userId: string, month?: number, year?: number) {
     const now = new Date();
 
     const selectedMonth = month ?? now.getMonth() + 1;
@@ -240,10 +234,7 @@ export class BudgetService {
     const spending = expenses._sum.amount ?? 0;
     const remaining = totalBudget - spending;
 
-    const percentage =
-      totalBudget > 0
-        ? (spending / totalBudget) * 100
-        : 0;
+    const percentage = totalBudget > 0 ? (spending / totalBudget) * 100 : 0;
 
     return {
       month: selectedMonth,

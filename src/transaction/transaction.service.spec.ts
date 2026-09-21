@@ -337,7 +337,9 @@ describe('TransactionService', () => {
 
       mockPrismaService.transaction.findMany.mockResolvedValue(transactions);
 
-      await expect(service.getRecent('user-123')).resolves.toEqual(transactions);
+      await expect(service.getRecent('user-123')).resolves.toEqual(
+        transactions,
+      );
       expect(mockPrismaService.transaction.findMany).toHaveBeenCalledWith({
         where: { userId: 'user-123' },
         take: 5,

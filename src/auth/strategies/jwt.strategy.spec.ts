@@ -47,8 +47,12 @@ describe('JwtStrategy', () => {
 
   it('returns null when the authorization header is missing or malformed', () => {
     expect(jwtFromBearerToken({ headers: {} })).toBeNull();
-    expect(jwtFromBearerToken({ headers: { authorization: 'Basic abc' } })).toBeNull();
-    expect(jwtFromBearerToken({ headers: { authorization: 'Bearer' } })).toBeNull();
+    expect(
+      jwtFromBearerToken({ headers: { authorization: 'Basic abc' } }),
+    ).toBeNull();
+    expect(
+      jwtFromBearerToken({ headers: { authorization: 'Bearer' } }),
+    ).toBeNull();
     expect(jwtFromBearerToken(undefined)).toBeNull();
   });
 

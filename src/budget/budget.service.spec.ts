@@ -1,4 +1,8 @@
-import { ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { jest } from '@jest/globals';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -161,12 +165,44 @@ describe('BudgetService', () => {
 
   it('classifies budgets into on track, warning and exceeded states without a status filter', async () => {
     mockPrismaService.$queryRaw.mockResolvedValue([
-      { id: 'budget-1', userId: 'user-123', category: 'FOOD', amount: '1000', spent: '1200', month: 9, year: 2026, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'budget-2', userId: 'user-123', category: 'TRANSPORT', amount: '1000', spent: '900', month: 9, year: 2026, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'budget-3', userId: 'user-123', category: 'BILLS', amount: '1000', spent: '300', month: 9, year: 2026, createdAt: new Date(), updatedAt: new Date() },
+      {
+        id: 'budget-1',
+        userId: 'user-123',
+        category: 'FOOD',
+        amount: '1000',
+        spent: '1200',
+        month: 9,
+        year: 2026,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'budget-2',
+        userId: 'user-123',
+        category: 'TRANSPORT',
+        amount: '1000',
+        spent: '900',
+        month: 9,
+        year: 2026,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'budget-3',
+        userId: 'user-123',
+        category: 'BILLS',
+        amount: '1000',
+        spent: '300',
+        month: 9,
+        year: 2026,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     ]);
 
-    await expect(service.findAll('user-123', { month: 9, year: 2026 })).resolves.toEqual({
+    await expect(
+      service.findAll('user-123', { month: 9, year: 2026 }),
+    ).resolves.toEqual({
       budgets: [
         {
           id: 'budget-1',

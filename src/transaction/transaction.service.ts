@@ -189,8 +189,8 @@ export class TransactionService {
         },
       ],
       include: {
-        wallet: true
-      }
+        wallet: true,
+      },
     });
 
     return transactions;

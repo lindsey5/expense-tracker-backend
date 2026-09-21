@@ -13,7 +13,7 @@ export class UserService {
     });
 
     if (!user) {
-      return { message: "User not found." }
+      return { message: 'User not found.' };
     }
 
     return {
