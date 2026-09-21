@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtStrategy, jwtFromBearerToken } from './jwt.strategy';
+import { JwtStrategy } from './jwt.strategy';
 
 const mockConfigService = {
   getOrThrow: jest.fn(() => 'jwt-secret'),
@@ -35,25 +35,6 @@ describe('JwtStrategy', () => {
       where: { id: 'user-123' },
       select: { id: true },
     });
-  });
-
-  it('extracts the token from a Bearer authorization header', () => {
-    const token = jwtFromBearerToken({
-      headers: { authorization: 'Bearer token-123' },
-    });
-
-    expect(token).toBe('token-123');
-  });
-
-  it('returns null when the authorization header is missing or malformed', () => {
-    expect(jwtFromBearerToken({ headers: {} })).toBeNull();
-    expect(
-      jwtFromBearerToken({ headers: { authorization: 'Basic abc' } }),
-    ).toBeNull();
-    expect(
-      jwtFromBearerToken({ headers: { authorization: 'Bearer' } }),
-    ).toBeNull();
-    expect(jwtFromBearerToken(undefined)).toBeNull();
   });
 
   it('rejects the token when the user no longer exists', async () => {

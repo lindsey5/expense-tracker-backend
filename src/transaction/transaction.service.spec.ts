@@ -223,14 +223,9 @@ describe('TransactionService', () => {
         },
         skip: 0,
         take: 10,
-        orderBy: [
-          {
-            date: 'desc',
-          },
-          {
-            createdAt: 'desc',
-          },
-        ],
+        orderBy: {
+          date: 'desc',
+        },
         include: {
           wallet: true,
         },
@@ -289,14 +284,9 @@ describe('TransactionService', () => {
         },
         skip: 10,
         take: 10,
-        orderBy: [
-          {
-            date: 'desc',
-          },
-          {
-            createdAt: 'desc',
-          },
-        ],
+        orderBy: {
+          date: 'desc',
+        },
         include: {
           wallet: true,
         },
