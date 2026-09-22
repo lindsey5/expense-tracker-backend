@@ -26,7 +26,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "docker/docker-compose.yaml,scripts/deploy.sh"
-          target: "/${{ secrets.SSH_USER }}"
+          target: "/home/${{ secrets.SSH_USER }}"
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.3
@@ -35,5 +35,5 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            chmod +x /${{ secrets.SSH_USER }}/scripts/deploy.sh
-            /${{ secrets.SSH_USER }}/scripts/deploy.sh
+            chmod +x /home/${{ secrets.SSH_USER }}/scripts/deploy.sh
+            /home/${{ secrets.SSH_USER }}/scripts/deploy.sh
