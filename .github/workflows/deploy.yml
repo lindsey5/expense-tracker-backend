@@ -19,6 +19,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate SSH Private Key
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SSH_PRIVATE_KEY" ]; then
+            echo "ERROR: SSH_PRIVATE_KEY is empty"
+            exit 1
+          fi
+
+          FIRST_LINE=$(printf '%s\n' "$SSH_PRIVATE_KEY" | head -n 1)
+          LAST_LINE=$(printf '%s\n' "$SSH_PRIVATE_KEY" | tail -n 1)
+
+          if [ "$FIRST_LINE" != "-----BEGIN OPENSSH PRIVATE KEY-----" ]; then
+            echo "ERROR: Invalid private key header"
+            exit 1
+          fi
+
+          if [ "$LAST_LINE" != "-----END OPENSSH PRIVATE KEY-----" ]; then
+            echo "ERROR: Invalid private key footer"
+            exit 1
+          fi
+
+          echo "SSH_PRIVATE_KEY exists and has the correct OpenSSH format"
+
       - name: Copy Docker Compose & Script to Server
         uses: appleboy/scp-action@master
         with:
@@ -36,4 +61,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             chmod +x /home/${{ secrets.SSH_USER }}/scripts/deploy.sh
-            DEPLOY_DIR=/home/${{ secrets.SSH_USER }}/docker /home/${{ secrets.SSH_USER }}/scripts/deploy.sh
+            DEPLOY_DIR=/home/${{ secrets.SSH_USER }}/docker \
+              /home/${{ secrets.SSH_USER }}/scripts/deploy.sh
