@@ -10,6 +10,17 @@ on:
       SSH_PRIVATE_KEY:
         required: true
 
+      CI_DATABASE_URL:
+        required: true
+      CI_JWT_SECRET:
+        required: true
+      CI_JWT_EXPIRES_IN:
+        required: true
+      CI_EMAIL_USER:
+        required: true
+      CI_BREVO_API_KEY:
+        required: true
+
 jobs:
   deploy:
     name: Deploy to Azure Server
@@ -30,10 +41,31 @@ jobs:
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.CI_JWT_SECRET }}
+          JWT_EXPIRES_IN: ${{ secrets.CI_JWT_EXPIRES_IN }}
+          EMAIL_USER: ${{ secrets.CI_EMAIL_USER }}
+          BREVO_API_KEY: ${{ secrets.CI_BREVO_API_KEY }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+          envs: DATABASE_URL,JWT_SECRET,JWT_EXPIRES_IN,EMAIL_USER,BREVO_API_KEY
+
           script: |
-            chmod +x /home/${{ secrets.SSH_USER }}/scripts/deploy.sh
-            /home/${{ secrets.SSH_USER }}/scripts/deploy.sh
+            mkdir -p "$HOME/docker"
+
+            {
+              printf 'DATABASE_URL=%s\n' "$DATABASE_URL"
+              printf 'JWT_SECRET=%s\n' "$JWT_SECRET"
+              printf 'JWT_EXPIRES_IN=%s\n' "$JWT_EXPIRES_IN"
+              printf 'EMAIL_USER=%s\n' "$EMAIL_USER"
+              printf 'BREVO_API_KEY=%s\n' "$BREVO_API_KEY"
+            } > "$HOME/docker/.env"
+
+            chmod 600 "$HOME/docker/.env"
+
+            chmod +x "$HOME/scripts/deploy.sh"
+            DEPLOY_DIR="$HOME/docker" "$HOME/scripts/deploy.sh"
