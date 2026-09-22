@@ -1,0 +1,7 @@
+name: expense-tracker-app
+
+services:
+  app:
+    image: lindseysamson5/expense-tracker-app
+    ports:
+      - '3000:3000'

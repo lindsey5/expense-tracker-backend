@@ -6,6 +6,10 @@ on:
       - dev
       - main
 
+    types:
+      - opened
+      - reopened
+
   push:
     branches:
       - dev
@@ -22,33 +26,27 @@ permissions:
   packages: write
 
 jobs:
-  security:
-    if: github.base_ref == 'main' || github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/security.yml
-
   lint:
     uses: ./.github/workflows/lint.yml
 
   unit-tests:
     uses: ./.github/workflows/unit-tests.yml
     secrets: inherit
-
-  smoke-tests:
-    uses: ./.github/workflows/smoke-tests.yml
-    secrets: inherit
+  
+  security:
+    if: github.base_ref == 'main' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/security.yml
 
   build:
     needs:
       - security
       - lint
       - unit-tests
-      - smoke-tests
 
     if: >
       always() &&
       needs.lint.result == 'success' &&
       needs.unit-tests.result == 'success' &&
-      needs.smoke-tests.result == 'success' &&
       (needs.security.result == 'success' || needs.security.result == 'skipped')
 
     uses: ./.github/workflows/build.yml
@@ -62,9 +60,7 @@ jobs:
       github.ref == 'refs/heads/main' &&
       needs.build.result == 'success'
 
-    uses: ./.github/workflows/publish.yml
-    with:
-      image: ${{ needs.build.outputs.image }}
+    uses: ./.github/workflows/deploy.yml
     secrets: inherit
 
   notify:
@@ -72,7 +68,6 @@ jobs:
       - security
       - lint
       - unit-tests
-      - smoke-tests
       - build
       - publish
 

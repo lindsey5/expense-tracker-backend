@@ -7,3 +7,10 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+
+  worker:
+    build: .
+    command: node dist/src/worker/worker.js
+    env_file:
+      - .env
+    restart: unless-stopped

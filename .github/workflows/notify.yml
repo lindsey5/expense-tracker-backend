@@ -1,4 +1,4 @@
-name: Backend Notify
+name: Notify Telegram
 
 on:
   workflow_call:
