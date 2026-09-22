@@ -46,6 +46,7 @@ jobs:
       (needs.security.result == 'success' || needs.security.result == 'skipped')
 
     uses: ./.github/workflows/build.yml
+    secrets: inherit
 
   publish:
     needs:
