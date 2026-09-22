@@ -25,8 +25,8 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "docker/docker-compose.yaml,scripts/deploy.sh"
-          target: "/azureuser"
+          source: "docker/docker-compose.yml,scripts/deploy.sh"
+          target: "/home/${{ secrets.SSH_USER }}"
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.3
@@ -36,4 +36,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             chmod +x /home/${{ secrets.SSH_USER }}/scripts/deploy.sh
-            /home/${{ secrets.SSH_USER }}/scripts/deploy.sh
+            DEPLOY_DIR=/home/${{ secrets.SSH_USER }}/docker /home/${{ secrets.SSH_USER }}/scripts/deploy.sh

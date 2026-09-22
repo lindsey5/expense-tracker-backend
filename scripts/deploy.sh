@@ -4,7 +4,7 @@ sudo -i bash <<EOF
 echo "***********************************"
 echo "Navigate to the docker folder"
 echo "***********************************"
-cd /azureuser/docker
+cd "${DEPLOY_DIR:-/home/azureuser/docker}"
 
 echo "***********************************"
 echo "Stop the application"

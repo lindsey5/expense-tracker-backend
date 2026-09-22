@@ -6,10 +6,6 @@ on:
       - dev
       - main
 
-    types:
-      - opened
-      - reopened
-
   push:
     branches:
       - dev
