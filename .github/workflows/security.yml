@@ -8,7 +8,7 @@ env:
 
 jobs:
   security:
-    name: Security
+    name: Security Checks
     runs-on: ubuntu-latest
     timeout-minutes: 10
 

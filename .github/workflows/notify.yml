@@ -20,7 +20,7 @@ on:
 
 jobs:
   notify:
-    name: Notify
+    name: Notify Telegram
     runs-on: ubuntu-latest
     timeout-minutes: 5
 

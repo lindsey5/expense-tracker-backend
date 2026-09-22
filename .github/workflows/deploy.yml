@@ -7,52 +7,33 @@ on:
         required: true
       SSH_USER:
         required: true
-      SSH_PRIVATE_KEY_B64:
+      SSH_PRIVATE_KEY:
         required: true
 
 jobs:
   deploy:
-    name: Deploy
+    name: Deploy to Azure Server
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup SSH Private Key
-        shell: bash
-        env:
-          SSH_PRIVATE_KEY_B64: ${{ secrets.SSH_PRIVATE_KEY_B64 }}
-        run: |
-          mkdir -p "$HOME/.ssh"
-
-          echo "$SSH_PRIVATE_KEY_B64" | base64 --decode > "$HOME/.ssh/deploy_key"
-
-          chmod 600 "$HOME/.ssh/deploy_key"
-
-          ssh-keygen -y \
-            -f "$HOME/.ssh/deploy_key" \
-            > /dev/null
-
-          echo "SSH private key is valid"
-
       - name: Copy Docker Compose & Script to Server
-        uses: appleboy/scp-action@v1
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key_path: /home/runner/.ssh/deploy_key
-          source: "docker/docker-compose.yml,scripts/deploy.sh"
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker/docker-compose.yaml,scripts/deploy.sh"
           target: "/home/${{ secrets.SSH_USER }}"
 
       - name: Deploy to Server
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key_path: /home/runner/.ssh/deploy_key
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             chmod +x /home/${{ secrets.SSH_USER }}/scripts/deploy.sh
-
-            DEPLOY_DIR=/home/${{ secrets.SSH_USER }}/docker \
-              /home/${{ secrets.SSH_USER }}/scripts/deploy.sh
+            /home/${{ secrets.SSH_USER }}/scripts/deploy.sh
