@@ -2,6 +2,16 @@ name: expense-tracker-app
 
 services:
   app:
-    image: lindseysamson5/expense-tracker-app
+    image: ${DOCKER_IMAGE}
     ports:
       - '3000:3000'
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  worker:
+    image: ${DOCKER_IMAGE}
+    command: node dist/src/worker/worker.js
+    env_file:
+      - .env
+    restart: unless-stopped

@@ -9,6 +9,10 @@ on:
         required: true
       SSH_PRIVATE_KEY:
         required: true
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
 
       CI_DATABASE_URL:
         required: true
@@ -36,12 +40,15 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "docker/docker-compose.yaml,scripts/deploy.sh"
-          target: "/home/${{ secrets.SSH_USER }}"
+          source: 'docker/docker-compose.yml,scripts/deploy.sh'
+          target: '/home/${{ secrets.SSH_USER }}'
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.3
         env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/expense-tracker-app:latest
           DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
           JWT_SECRET: ${{ secrets.CI_JWT_SECRET }}
           JWT_EXPIRES_IN: ${{ secrets.CI_JWT_EXPIRES_IN }}
@@ -52,12 +59,13 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-          envs: DATABASE_URL,JWT_SECRET,JWT_EXPIRES_IN,EMAIL_USER,BREVO_API_KEY
+          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,DOCKER_IMAGE,DATABASE_URL,JWT_SECRET,JWT_EXPIRES_IN,EMAIL_USER,BREVO_API_KEY
 
           script: |
             mkdir -p "$HOME/docker"
 
             {
+              printf 'DOCKER_IMAGE=%s\n' "$DOCKER_IMAGE"
               printf 'DATABASE_URL=%s\n' "$DATABASE_URL"
               printf 'JWT_SECRET=%s\n' "$JWT_SECRET"
               printf 'JWT_EXPIRES_IN=%s\n' "$JWT_EXPIRES_IN"

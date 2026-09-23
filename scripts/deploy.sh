@@ -1,27 +1,34 @@
 #!/bin/bash
 
-sudo -i bash <<EOF
+set -e
+
 echo "***********************************"
 echo "Navigate to the docker folder"
 echo "***********************************"
 cd "${DEPLOY_DIR:-/home/azureuser/docker}"
 
+if [ -n "${DOCKERHUB_USERNAME:-}" ] && [ -n "${DOCKERHUB_TOKEN:-}" ]; then
+  echo "***********************************"
+  echo "Login to Docker Hub"
+  echo "***********************************"
+  echo "$DOCKERHUB_TOKEN" | sudo docker login --username "$DOCKERHUB_USERNAME" --password-stdin
+fi
+
 echo "***********************************"
 echo "Stop the application"
 echo "***********************************"
-docker compose down
+sudo docker compose down
 
 echo "***********************************"
-echo "Removing all docker images"
+echo "Pull the latest image"
 echo "***********************************"
-docker image prune -a -f
+sudo docker compose pull
 
 echo "***********************************"
 echo "Start the application"
 echo "***********************************"
-docker compose up -d
+sudo docker compose up -d
 
 echo "***********************************"
 echo "Application is now running!"
 echo "***********************************"
-EOF
