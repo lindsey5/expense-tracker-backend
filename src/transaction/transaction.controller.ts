@@ -1,15 +1,14 @@
-import { Controller, Get, Post, Body, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Query, Delete, Param, Patch } from '@nestjs/common';
 import { TransactionService } from './transaction.service';
-import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { CreateTransactionDto, CreateTransactionResponse } from './dto/create-transaction.dto';
 import { JwtAuthGuard } from 'src/auth/guards/JwtAuthGuard';
-import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CurrentUserId } from 'src/common/decorator/current-user.decorator';
 import {
   GetTransactionsDto,
   GetTransactionsResponseDto,
 } from './dto/get-transaction.dto';
 import {
-  CreateUpdateTransactionResponse,
   TransactionResponseDto,
 } from './dto/transaction.dto';
 import { TransactionSummaryService } from './transaction-summary.service';
@@ -19,6 +18,8 @@ import {
 } from './dto/transaction-summary.dto';
 import { DateFilter } from 'src/dto/common.dto';
 import { GetMonths } from 'src/common/dto/month.dto';
+import { DeleteTransactionResponse } from './dto/delete-transaction.dto';
+import { UpdateTransactionDto } from './dto/update-transaction.dto';
 
 @Controller('transaction')
 export class TransactionController {
@@ -28,9 +29,10 @@ export class TransactionController {
   ) {}
 
   @Post()
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'create_transaction' })
-  @ApiOkResponse({ type: CreateUpdateTransactionResponse })
+  @ApiOkResponse({ type: CreateTransactionResponse })
   create(
     @CurrentUserId() userId: string,
     @Body() createTransactionDto: CreateTransactionDto,
@@ -39,6 +41,7 @@ export class TransactionController {
   }
 
   @Get()
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'list_transactions' })
   @ApiOkResponse({ type: GetTransactionsResponseDto })
@@ -50,6 +53,7 @@ export class TransactionController {
   }
 
   @Get('incomes')
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'get_transaction_incomes' })
   @ApiOkResponse({ type: GetIncomesResponseDto })
@@ -60,6 +64,7 @@ export class TransactionController {
   }
 
   @Get('expenses')
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'get_transaction_expenses' })
   @ApiOkResponse({ type: GetExpensesResponseDto })
@@ -70,6 +75,7 @@ export class TransactionController {
   }
 
   @Get('months')
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'list_transaction_months' })
   @ApiOkResponse({ type: [GetMonths] })
@@ -78,10 +84,34 @@ export class TransactionController {
   }
 
   @Get('recent')
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'list_transaction_recent' })
   @ApiOkResponse({ type: [TransactionResponseDto] })
   getRecent(@CurrentUserId() userId: string) {
     return this.transactionService.getRecent(userId);
   }
+
+  @Patch(':id')
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'update_transaction' })
+  @ApiOkResponse({ type: UpdateTransactionDto })
+  update(
+    @CurrentUserId() userId: string, 
+    @Param('id') id: string,
+    @Body() updateTransactionDto: UpdateTransactionDto
+  ) {
+    return this.transactionService.update(id, updateTransactionDto.amount, userId);
+  }
+
+  @Delete(':id')
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'delete_transaction' })
+  @ApiOkResponse({ type: DeleteTransactionResponse })
+  delete(@CurrentUserId() userId: string, @Param('id') id: string) {
+    return this.transactionService.delete(userId, id);
+  }
+
 }

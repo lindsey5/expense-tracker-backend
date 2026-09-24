@@ -33,11 +33,3 @@ export class TransactionResponseDto {
   @ApiProperty({ type: WalletDto })
   wallet!: WalletDto;
 }
-
-export class CreateUpdateTransactionResponse {
-  @ApiProperty()
-  message!: string;
-
-  @ApiProperty({ type: TransactionResponseDto })
-  transaction!: TransactionResponseDto;
-}

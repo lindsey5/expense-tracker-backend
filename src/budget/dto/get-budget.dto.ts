@@ -11,22 +11,22 @@ export enum BudgetStatus {
 }
 
 export class GetBudgetsQueryDto {
-  @ApiPropertyOptional({
+  @Type(() => Number)
+  @ApiProperty({
     example: new Date().getMonth() + 1,
     minimum: 1,
     maximum: 12,
   })
-  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(12)
   month!: number;
 
-  @ApiPropertyOptional({
+  @Type(() => Number)
+  @ApiProperty({
     example: new Date().getFullYear(),
     minimum: 2000,
   })
-  @Type(() => Number)
   @IsInt()
   @Min(2000)
   year!: number;

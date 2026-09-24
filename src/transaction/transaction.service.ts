@@ -78,7 +78,6 @@ export class TransactionService {
       getTransactionsDto;
 
     const skip = (page - 1) * limit;
-
     const where: TransactionListWhere = { userId };
 
     if (type) {
@@ -154,7 +153,6 @@ export class TransactionService {
     `;
 
     const now = new Date();
-
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
 
@@ -194,5 +192,58 @@ export class TransactionService {
     });
 
     return transactions;
+  }
+
+  async delete(userId: string, transactionId: string) {
+    const transaction = await this.prisma.transaction.findUnique({
+      where: {
+        userId,
+        id: transactionId
+      }
+    });
+
+    if(!transaction) return new NotFoundException("Transaction not found");
+
+    await this.prisma.wallet.update({
+      where: {
+        id: transaction.walletId,
+      },
+      data: {
+        balance: {
+          increment: transaction.type === 'EXPENSE' ? transaction.amount : -transaction.amount,
+        },
+      },
+    });
+
+    await this.prisma.transaction.delete({
+      where: {
+        id: transactionId
+      }
+    })
+
+    return { message: "Transaction succcessfully deleted." };
+  }
+
+  async update(id: string, amount: number, userId: string) {
+    const transaction = await this.prisma.transaction.findUnique({
+      where: {
+        id,
+        userId
+      }
+    })
+
+    if(!transaction) return new NotFoundException("Transaction not found");
+
+    const updatedTransaction = await this.prisma.transaction.update({
+      where: {
+        id,
+      },
+      data: { amount }
+    });
+
+    return {
+      transaction: updatedTransaction,
+      message: "Transaction successfully updated."
+    }
   }
 }

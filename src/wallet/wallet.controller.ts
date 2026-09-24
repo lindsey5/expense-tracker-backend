@@ -8,7 +8,7 @@ import {
   Delete,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { WalletService } from './wallet.service';
 import {
   CreateWalletDto,
@@ -27,6 +27,7 @@ export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 
   @Post()
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'create_wallet' })
   @ApiOkResponse({ type: CreateWalletResponseDto })
@@ -38,6 +39,7 @@ export class WalletController {
   }
 
   @Get()
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'list_wallets' })
   @ApiOkResponse({ type: GetWalletsResponseDto })
@@ -46,6 +48,7 @@ export class WalletController {
   }
 
   @Get('total-balance')
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'get_total_balance' })
   @ApiOkResponse({ type: GetTotalBalance })
@@ -54,6 +57,7 @@ export class WalletController {
   }
 
   @Patch(':id')
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'update_wallet' })
   @ApiOkResponse({ type: UpdateWalletResponseDto })
@@ -62,6 +66,7 @@ export class WalletController {
   }
 
   @Delete(':id')
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'delete_wallet' })
   remove(@Param('id') id: string) {

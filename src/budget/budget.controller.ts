@@ -13,7 +13,7 @@ import { BudgetService } from './budget.service';
 import { CreateBudgetDto, CreateBudgetResponse } from './dto/create-budget.dto';
 import { UpdateBudgetDto, UpdateBudgetResponse } from './dto/update-budget.dto';
 import { JwtAuthGuard } from 'src/auth/guards/JwtAuthGuard';
-import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CurrentUserId } from 'src/common/decorator/current-user.decorator';
 import { GetBudgetsQueryDto, GetBudgetsResponse } from './dto/get-budget.dto';
 import { GetMonths } from 'src/common/dto/month.dto';
@@ -27,6 +27,7 @@ export class BudgetController {
   constructor(private readonly budgetService: BudgetService) {}
 
   @Post()
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'create_budget' })
   @ApiOkResponse({ type: CreateBudgetResponse })
@@ -38,6 +39,7 @@ export class BudgetController {
   }
 
   @Get()
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'list_budgets' })
   @ApiOkResponse({ type: GetBudgetsResponse })
@@ -46,6 +48,7 @@ export class BudgetController {
   }
 
   @Patch(':id')
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'update_budget' })
   @ApiOkResponse({ type: UpdateBudgetResponse })
@@ -58,6 +61,7 @@ export class BudgetController {
   }
 
   @Delete(':id')
+  @ApiBearerAuth('access-token')
   @ApiOperation({ operationId: 'delete_budget' })
   @UseGuards(JwtAuthGuard)
   remove(@CurrentUserId() userId: string, @Param('id') id: string) {
@@ -65,6 +69,7 @@ export class BudgetController {
   }
 
   @Get('months')
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'budget_months' })
   @ApiOkResponse({ type: [GetMonths] })
@@ -73,6 +78,7 @@ export class BudgetController {
   }
 
   @Get('monthly-budget')
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ operationId: 'monthly_budget' })
   @ApiOkResponse({ type: GetMonthlyBudgetResponse })
