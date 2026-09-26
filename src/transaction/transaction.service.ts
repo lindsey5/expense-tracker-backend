@@ -198,11 +198,11 @@ export class TransactionService {
     const transaction = await this.prisma.transaction.findUnique({
       where: {
         userId,
-        id: transactionId
-      }
+        id: transactionId,
+      },
     });
 
-    if(!transaction) return new NotFoundException("Transaction not found");
+    if (!transaction) return new NotFoundException('Transaction not found');
 
     await this.prisma.wallet.update({
       where: {
@@ -210,40 +210,43 @@ export class TransactionService {
       },
       data: {
         balance: {
-          increment: transaction.type === 'EXPENSE' ? transaction.amount : -transaction.amount,
+          increment:
+            transaction.type === 'EXPENSE'
+              ? transaction.amount
+              : -transaction.amount,
         },
       },
     });
 
     await this.prisma.transaction.delete({
       where: {
-        id: transactionId
-      }
-    })
+        id: transactionId,
+      },
+    });
 
-    return { message: "Transaction succcessfully deleted." };
+    return { message: 'Transaction succcessfully deleted.' };
   }
 
   async update(id: string, amount: number, userId: string) {
     const transaction = await this.prisma.transaction.findUnique({
       where: {
         id,
-        userId
-      }
-    })
+        userId,
+      },
+    });
 
-    if(!transaction) return new NotFoundException("Transaction not found");
+    if (!transaction) return new NotFoundException('Transaction not found');
 
     const updatedTransaction = await this.prisma.transaction.update({
       where: {
         id,
       },
-      data: { amount }
+      data: { amount },
     });
 
     return {
       transaction: updatedTransaction,
-      message: "Transaction successfully updated."
-    }
+      message: 'Transaction successfully updated.',
+    };
   }
 }

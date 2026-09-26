@@ -1,6 +1,19 @@
-import { Controller, Get, Post, Body, UseGuards, Query, Delete, Param, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Query,
+  Delete,
+  Param,
+  Patch,
+} from '@nestjs/common';
 import { TransactionService } from './transaction.service';
-import { CreateTransactionDto, CreateTransactionResponse } from './dto/create-transaction.dto';
+import {
+  CreateTransactionDto,
+  CreateTransactionResponse,
+} from './dto/create-transaction.dto';
 import { JwtAuthGuard } from 'src/auth/guards/JwtAuthGuard';
 import { ApiOkResponse, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CurrentUserId } from 'src/common/decorator/current-user.decorator';
@@ -8,9 +21,7 @@ import {
   GetTransactionsDto,
   GetTransactionsResponseDto,
 } from './dto/get-transaction.dto';
-import {
-  TransactionResponseDto,
-} from './dto/transaction.dto';
+import { TransactionResponseDto } from './dto/transaction.dto';
 import { TransactionSummaryService } from './transaction-summary.service';
 import {
   GetExpensesResponseDto,
@@ -20,6 +31,10 @@ import { DateFilter } from 'src/dto/common.dto';
 import { GetMonths } from 'src/common/dto/month.dto';
 import { DeleteTransactionResponse } from './dto/delete-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import {
+  GetMonthlyTransactionsQueryDto,
+  GetMonthlyTransactionsResponseDto,
+} from './dto/get-monthly-transaction.dto';
 
 @Controller('transaction')
 export class TransactionController {
@@ -98,11 +113,15 @@ export class TransactionController {
   @ApiOperation({ operationId: 'update_transaction' })
   @ApiOkResponse({ type: UpdateTransactionDto })
   update(
-    @CurrentUserId() userId: string, 
+    @CurrentUserId() userId: string,
     @Param('id') id: string,
-    @Body() updateTransactionDto: UpdateTransactionDto
+    @Body() updateTransactionDto: UpdateTransactionDto,
   ) {
-    return this.transactionService.update(id, updateTransactionDto.amount, userId);
+    return this.transactionService.update(
+      id,
+      updateTransactionDto.amount,
+      userId,
+    );
   }
 
   @Delete(':id')
@@ -114,4 +133,18 @@ export class TransactionController {
     return this.transactionService.delete(userId, id);
   }
 
+  @Get('monthly')
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'monthly_transactions' })
+  @ApiOkResponse({ type: GetMonthlyTransactionsResponseDto, isArray: true })
+  getMonthlyTransaction(
+    @CurrentUserId() userId: string,
+    @Query() dto: GetMonthlyTransactionsQueryDto,
+  ) {
+    return this.transactionSummaryService.getMonthlyTransaction(
+      dto.year,
+      userId,
+    );
+  }
 }
