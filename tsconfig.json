@@ -30,6 +30,6 @@
     "src/**/*.ts",
     "test/**/*.ts",
     "generated/**/*.ts",
-    "prisma7.config.ts"
+    "prisma.config.ts"
   ]
 }
