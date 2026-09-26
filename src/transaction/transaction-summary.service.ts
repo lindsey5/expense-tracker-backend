@@ -87,19 +87,25 @@ export class TransactionSummaryService {
       ORDER BY month;
     `;
 
-    const monthly = Array.from({ length: 12 }, (_, index) => ({
-      month: index + 1,
-      income: 0,
-      expense: 0,
-    }));
+    const monthly:{ income: number; expense: number; month: number } [] = [];
 
     for (const row of result) {
-      const item = monthly[row.month - 1];
+      let item = monthly.find((month) => month.month === row.month);
 
-      if (row.type === 'INCOME') {
-        item.income = Number(row.total);
+      if (!item) {
+        item = {
+          month: row.month,
+          income: 0,
+          expense: 0,
+        };
+
+        monthly.push(item);
+      }
+
+      if (row.type === "INCOME") {
+        item.income += Number(row.total);
       } else {
-        item.expense = Number(row.total);
+        item.expense += Number(row.total);
       }
     }
 
