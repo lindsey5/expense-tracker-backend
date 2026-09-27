@@ -87,7 +87,7 @@ export class TransactionSummaryService {
       ORDER BY month;
     `;
 
-    const monthly:{ income: number; expense: number; month: number } [] = [];
+    const monthly: { income: number; expense: number; month: number }[] = [];
 
     for (const row of result) {
       let item = monthly.find((month) => month.month === row.month);
@@ -102,7 +102,7 @@ export class TransactionSummaryService {
         monthly.push(item);
       }
 
-      if (row.type === "INCOME") {
+      if (row.type === 'INCOME') {
         item.income += Number(row.total);
       } else {
         item.expense += Number(row.total);
