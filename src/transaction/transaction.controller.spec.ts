@@ -7,7 +7,10 @@ import { CreateTransactionDto } from './dto/create-transaction.dto';
 const mockTransactionService = {
   create: jest.fn(),
   findAll: jest.fn(),
+  getRecent: jest.fn(),
   getMonths: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
 };
 
 const mockTransactionSummaryService = {
@@ -144,6 +147,60 @@ describe('TransactionController', () => {
     expect(mockTransactionService.getMonths).toHaveBeenCalledWith('user-123');
   });
 
+  it('delegates recent transaction requests to TransactionService', async () => {
+    const response = [
+      {
+        id: 'transaction-123',
+        title: 'Dinner',
+      },
+    ];
+
+    mockTransactionService.getRecent.mockResolvedValue(response);
+
+    await expect(controller.getRecent('user-123')).resolves.toEqual(response);
+
+    expect(mockTransactionService.getRecent).toHaveBeenCalledWith('user-123');
+  });
+
+  it('delegates update requests to TransactionService', async () => {
+    const response = {
+      message: 'Transaction successfully updated.',
+      transaction: {
+        id: 'transaction-123',
+        amount: 1500,
+      },
+    };
+
+    mockTransactionService.update.mockResolvedValue(response);
+
+    await expect(
+      controller.update('user-123', 'transaction-123', { amount: 1500 }),
+    ).resolves.toEqual(response);
+
+    expect(mockTransactionService.update).toHaveBeenCalledWith(
+      'transaction-123',
+      1500,
+      'user-123',
+    );
+  });
+
+  it('delegates delete requests to TransactionService', async () => {
+    const response = {
+      message: 'Transaction succcessfully deleted.',
+    };
+
+    mockTransactionService.delete.mockResolvedValue(response);
+
+    await expect(
+      controller.delete('user-123', 'transaction-123'),
+    ).resolves.toEqual(response);
+
+    expect(mockTransactionService.delete).toHaveBeenCalledWith(
+      'user-123',
+      'transaction-123',
+    );
+  });
+
   it('loads when reflected decorator types fall back to Object', async () => {
     await jest.isolateModulesAsync(async () => {
       jest.unstable_mockModule('./transaction.service', () => ({
@@ -154,6 +211,7 @@ describe('TransactionController', () => {
       }));
       jest.unstable_mockModule('./dto/create-transaction.dto', () => ({
         CreateTransactionDto: undefined,
+        CreateTransactionResponse: undefined,
       }));
       jest.unstable_mockModule('./dto/get-transaction.dto', () => ({
         GetTransactionsDto: undefined,
@@ -168,8 +226,18 @@ describe('TransactionController', () => {
         GetExpensesResponseDto: undefined,
         GetIncomesResponseDto: undefined,
       }));
+      jest.unstable_mockModule('./dto/delete-transaction.dto', () => ({
+        DeleteTransactionResponse: undefined,
+      }));
+      jest.unstable_mockModule('./dto/update-transaction.dto', () => ({
+        UpdateTransactionDto: undefined,
+        UpdateTransactionResponse: undefined,
+      }));
       jest.unstable_mockModule('src/dto/common.dto', () => ({
         DateFilter: undefined,
+      }));
+      jest.unstable_mockModule('src/common/dto/month.dto', () => ({
+        GetMonths: undefined,
       }));
 
       await expect(import('./transaction.controller')).resolves.toHaveProperty(

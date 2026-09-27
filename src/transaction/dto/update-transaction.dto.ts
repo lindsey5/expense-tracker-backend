@@ -1,6 +1,6 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsNumber, Min } from "class-validator";
-import { TransactionResponseDto } from "./transaction.dto";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNumber, Min } from 'class-validator';
+import { TransactionResponseDto } from './transaction.dto';
 
 export class UpdateTransactionDto {
   @ApiProperty()

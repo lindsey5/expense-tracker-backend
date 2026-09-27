@@ -6,4 +6,4 @@ async function bootstrap() {
   console.log('Worker started');
 }
 
-bootstrap();
+void bootstrap();

@@ -11,8 +11,11 @@ const mockPrismaService = {
   },
   transaction: {
     create: jest.fn(),
+    delete: jest.fn(),
+    findUnique: jest.fn(),
     findMany: jest.fn(),
     count: jest.fn(),
+    update: jest.fn(),
   },
   $transaction: jest.fn(
     (
@@ -198,6 +201,31 @@ describe('TransactionService', () => {
         message: 'Transaction successfully created.',
         transaction: createdTransaction,
       });
+    });
+
+    it('throws when an expense exceeds the wallet balance', async () => {
+      const expenseDto = {
+        walletId: 'wallet-123',
+        type: expenseType,
+        category: foodCategory,
+        amount: 11000,
+        title: 'Laptop',
+        date: '2026-09-19',
+      };
+
+      mockPrismaService.wallet.findUnique.mockResolvedValue({
+        id: 'wallet-123',
+        balance: 10000,
+        userId: 'user-123',
+      });
+
+      await expect(service.create(expenseDto, 'user-123')).rejects.toThrow(
+        'Insufficient wallet balance.',
+      );
+
+      expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+      expect(mockPrismaService.transaction.create).not.toHaveBeenCalled();
+      expect(mockPrismaService.wallet.update).not.toHaveBeenCalled();
     });
   });
 
@@ -386,6 +414,135 @@ describe('TransactionService', () => {
       ]);
 
       jest.useRealTimers();
+    });
+  });
+
+  describe('delete', () => {
+    it('throws when the transaction does not exist for the user', async () => {
+      mockPrismaService.transaction.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.delete('user-123', 'transaction-123'),
+      ).rejects.toThrow('Transaction not found');
+
+      expect(mockPrismaService.transaction.findUnique).toHaveBeenCalledWith({
+        where: {
+          userId: 'user-123',
+          id: 'transaction-123',
+        },
+      });
+      expect(mockPrismaService.wallet.update).not.toHaveBeenCalled();
+      expect(mockPrismaService.transaction.delete).not.toHaveBeenCalled();
+    });
+
+    it('deletes an expense transaction and restores the wallet balance', async () => {
+      mockPrismaService.transaction.findUnique.mockResolvedValue({
+        id: 'transaction-123',
+        walletId: 'wallet-123',
+        type: expenseType,
+        amount: 1000,
+      });
+      mockPrismaService.wallet.update.mockResolvedValue({ id: 'wallet-123' });
+      mockPrismaService.transaction.delete.mockResolvedValue({
+        id: 'transaction-123',
+      });
+
+      await expect(
+        service.delete('user-123', 'transaction-123'),
+      ).resolves.toEqual({
+        message: 'Transaction succcessfully deleted.',
+      });
+
+      expect(mockPrismaService.wallet.update).toHaveBeenCalledWith({
+        where: {
+          id: 'wallet-123',
+        },
+        data: {
+          balance: {
+            increment: 1000,
+          },
+        },
+      });
+      expect(mockPrismaService.transaction.delete).toHaveBeenCalledWith({
+        where: {
+          id: 'transaction-123',
+        },
+      });
+    });
+
+    it('deletes an income transaction and removes it from the wallet balance', async () => {
+      mockPrismaService.transaction.findUnique.mockResolvedValue({
+        id: 'transaction-123',
+        walletId: 'wallet-123',
+        type: incomeType,
+        amount: 5000,
+      });
+      mockPrismaService.wallet.update.mockResolvedValue({ id: 'wallet-123' });
+      mockPrismaService.transaction.delete.mockResolvedValue({
+        id: 'transaction-123',
+      });
+
+      await service.delete('user-123', 'transaction-123');
+
+      expect(mockPrismaService.wallet.update).toHaveBeenCalledWith({
+        where: {
+          id: 'wallet-123',
+        },
+        data: {
+          balance: {
+            increment: -5000,
+          },
+        },
+      });
+    });
+  });
+
+  describe('update', () => {
+    it('throws when the transaction does not exist for the user', async () => {
+      mockPrismaService.transaction.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.update('transaction-123', 1500, 'user-123'),
+      ).rejects.toThrow('Transaction not found');
+
+      expect(mockPrismaService.transaction.findUnique).toHaveBeenCalledWith({
+        where: {
+          id: 'transaction-123',
+          userId: 'user-123',
+        },
+      });
+      expect(mockPrismaService.transaction.update).not.toHaveBeenCalled();
+    });
+
+    it('updates the transaction amount', async () => {
+      const updatedTransaction = {
+        id: 'transaction-123',
+        amount: 1500,
+      };
+
+      mockPrismaService.transaction.findUnique.mockResolvedValue({
+        id: 'transaction-123',
+        amount: 1000,
+      });
+      mockPrismaService.transaction.update.mockResolvedValue(
+        updatedTransaction,
+      );
+
+      await expect(
+        service.update('transaction-123', 1500, 'user-123'),
+      ).resolves.toEqual({
+        transaction: updatedTransaction,
+        message: 'Transaction successfully updated.',
+      });
+
+      expect(mockPrismaService.transaction.update).toHaveBeenCalledWith({
+        where: {
+          id: 'transaction-123',
+        },
+        data: {
+          amount: 1500,
+        },
+      });
     });
   });
 

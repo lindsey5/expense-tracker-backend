@@ -34,7 +34,6 @@ export class CreateTransactionDto {
   date!: string;
 }
 
-
 export class CreateTransactionResponse {
   @ApiProperty()
   message!: string;
