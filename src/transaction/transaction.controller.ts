@@ -30,10 +30,11 @@ import {
 import { DateFilter } from 'src/dto/common.dto';
 import { GetMonths } from 'src/common/dto/month.dto';
 import { DeleteTransactionResponse } from './dto/delete-transaction.dto';
+import { UpdateTransactionDto, UpdateTransactionResponse } from './dto/update-transaction.dto';
 import {
-  UpdateTransactionDto,
-  UpdateTransactionResponse,
-} from './dto/update-transaction.dto';
+  GetMonthlyTransactionsQueryDto,
+  GetMonthlyTransactionsResponseDto,
+} from './dto/get-monthly-transaction.dto';
 
 @Controller('transaction')
 export class TransactionController {
@@ -130,5 +131,20 @@ export class TransactionController {
   @ApiOkResponse({ type: DeleteTransactionResponse })
   delete(@CurrentUserId() userId: string, @Param('id') id: string) {
     return this.transactionService.delete(userId, id);
+  }
+
+  @Get('monthly')
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ operationId: 'monthly_transactions' })
+  @ApiOkResponse({ type: GetMonthlyTransactionsResponseDto, isArray: true })
+  getMonthlyTransaction(
+    @CurrentUserId() userId: string,
+    @Query() dto: GetMonthlyTransactionsQueryDto,
+  ) {
+    return this.transactionSummaryService.getMonthlyTransaction(
+      dto.year,
+      userId,
+    );
   }
 }

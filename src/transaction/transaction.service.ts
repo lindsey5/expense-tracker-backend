@@ -200,6 +200,8 @@ export class TransactionService {
         userId,
         id: transactionId,
       },
+        id: transactionId,
+      },
     });
 
     if (!transaction) {
@@ -216,6 +218,10 @@ export class TransactionService {
             transaction.type === 'EXPENSE'
               ? transaction.amount
               : -transaction.amount,
+          increment:
+            transaction.type === 'EXPENSE'
+              ? transaction.amount
+              : -transaction.amount,
         },
       },
     });
@@ -225,7 +231,11 @@ export class TransactionService {
         id: transactionId,
       },
     });
+        id: transactionId,
+      },
+    });
 
+    return { message: 'Transaction succcessfully deleted.' };
     return { message: 'Transaction succcessfully deleted.' };
   }
 
@@ -233,6 +243,9 @@ export class TransactionService {
     const transaction = await this.prisma.transaction.findUnique({
       where: {
         id,
+        userId,
+      },
+    });
         userId,
       },
     });
@@ -246,11 +259,15 @@ export class TransactionService {
         id,
       },
       data: { amount },
+      data: { amount },
     });
 
     return {
       transaction: updatedTransaction,
       message: 'Transaction successfully updated.',
     };
+      message: 'Transaction successfully updated.',
+    };
   }
 }
+
