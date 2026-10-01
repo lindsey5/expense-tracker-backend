@@ -230,7 +230,7 @@ export class TransactionService {
   }
 
   async update(id: string, amount: number, userId: string) {
-    const transaction = await this.prisma.transaction.findUnique({
+    const transaction = await this.prisma.transaction.findFirst({
       where: {
         id,
         userId,
@@ -241,11 +241,48 @@ export class TransactionService {
       throw new NotFoundException('Transaction not found');
     }
 
-    const updatedTransaction = await this.prisma.transaction.update({
-      where: {
-        id,
-      },
-      data: { amount },
+    const updatedTransaction = await this.prisma.$transaction(async (tx) => {
+      // Reverse the old transaction amount
+      await tx.wallet.update({
+        where: {
+          id: transaction.walletId,
+        },
+        data: {
+          balance: {
+            increment:
+              transaction.type === 'EXPENSE'
+                ? transaction.amount
+                : -transaction.amount,
+          },
+        },
+      });
+
+      // Update the transaction
+      const updated = await tx.transaction.update({
+        where: {
+          id,
+        },
+        data: {
+          amount,
+        },
+      });
+
+      // Apply the new transaction amount
+      await tx.wallet.update({
+        where: {
+          id: transaction.walletId,
+        },
+        data: {
+          balance: {
+            increment:
+              transaction.type === 'EXPENSE'
+                ? -amount
+                : amount,
+          },
+        },
+      });
+
+      return updated;
     });
 
     return {

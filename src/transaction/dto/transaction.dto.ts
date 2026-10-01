@@ -1,5 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
 import { TransactionCategory, TransactionType } from 'generated/prisma/enums';
+
 import { WalletDto } from 'src/wallet/dto/wallet.dto';
 
 export class TransactionResponseDto {
@@ -30,6 +32,6 @@ export class TransactionResponseDto {
   @ApiProperty()
   updatedAt!: Date;
 
-  @ApiProperty({ type: WalletDto })
-  wallet!: WalletDto;
+  @ApiPropertyOptional({ type: WalletDto, nullable: true })
+  wallet?: WalletDto | null;
 }
