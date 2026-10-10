@@ -13,6 +13,7 @@ const mockPrismaService = {
     create: jest.fn(),
     delete: jest.fn(),
     findUnique: jest.fn(),
+    findFirst: jest.fn(),
     findMany: jest.fn(),
     count: jest.fn(),
     update: jest.fn(),
@@ -499,13 +500,13 @@ describe('TransactionService', () => {
 
   describe('update', () => {
     it('throws when the transaction does not exist for the user', async () => {
-      mockPrismaService.transaction.findUnique.mockResolvedValue(null);
+      mockPrismaService.transaction.findFirst.mockResolvedValue(null);
 
       await expect(
         service.update('transaction-123', 1500, 'user-123'),
       ).rejects.toThrow('Transaction not found');
 
-      expect(mockPrismaService.transaction.findUnique).toHaveBeenCalledWith({
+      expect(mockPrismaService.transaction.findFirst).toHaveBeenCalledWith({
         where: {
           id: 'transaction-123',
           userId: 'user-123',
@@ -514,19 +515,22 @@ describe('TransactionService', () => {
       expect(mockPrismaService.transaction.update).not.toHaveBeenCalled();
     });
 
-    it('updates the transaction amount', async () => {
+    it('updates the amount and adjusts the wallet balance for an expense', async () => {
       const updatedTransaction = {
         id: 'transaction-123',
         amount: 1500,
       };
 
-      mockPrismaService.transaction.findUnique.mockResolvedValue({
+      mockPrismaService.transaction.findFirst.mockResolvedValue({
         id: 'transaction-123',
+        walletId: 'wallet-123',
+        type: expenseType,
         amount: 1000,
       });
       mockPrismaService.transaction.update.mockResolvedValue(
         updatedTransaction,
       );
+      mockPrismaService.wallet.update.mockResolvedValue({ id: 'wallet-123' });
 
       await expect(
         service.update('transaction-123', 1500, 'user-123'),
@@ -535,6 +539,10 @@ describe('TransactionService', () => {
         message: 'Transaction successfully updated.',
       });
 
+      expect(mockPrismaService.wallet.update).toHaveBeenNthCalledWith(1, {
+        where: { id: 'wallet-123' },
+        data: { balance: { increment: 1000 } },
+      });
       expect(mockPrismaService.transaction.update).toHaveBeenCalledWith({
         where: {
           id: 'transaction-123',
@@ -542,6 +550,10 @@ describe('TransactionService', () => {
         data: {
           amount: 1500,
         },
+      });
+      expect(mockPrismaService.wallet.update).toHaveBeenNthCalledWith(2, {
+        where: { id: 'wallet-123' },
+        data: { balance: { increment: -1500 } },
       });
     });
   });

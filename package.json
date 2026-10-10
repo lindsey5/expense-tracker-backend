@@ -89,6 +89,7 @@
       "!**/*.module.ts",
       "!**/*.controller.ts",
       "!**/main.ts",
+      "!worker/worker.ts",
       "!**/coverage/**",
       "!**/test-mocks/**",
       "!auth/strategies/jwt.strategy.ts",
