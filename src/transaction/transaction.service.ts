@@ -274,10 +274,7 @@ export class TransactionService {
         },
         data: {
           balance: {
-            increment:
-              transaction.type === 'EXPENSE'
-                ? -amount
-                : amount,
+            increment: transaction.type === 'EXPENSE' ? -amount : amount,
           },
         },
       });
