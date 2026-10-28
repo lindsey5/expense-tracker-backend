@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -44,7 +44,7 @@ jobs:
 
       - name: Lint
         run: npm run lint:check
-        
+
       - name: Test coverage
         env:
           DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
@@ -55,4 +55,28 @@ jobs:
         run: >-
           npm run test:cov --
           --coverageThreshold='{"global":{"branches":90,"functions":90,"lines":90,"statements":90}}'
+
+      - name: Build application
+        run: npm run build
+
+      - name: Build Docker image
+        run: docker build --tag expense-tracker-backend:ci .
+
+      - name: Smoke test Docker image
+        run: |
+          docker run --detach --name backend-ci-smoke \
+            --publish 127.0.0.1:3000:3000 \
+            --env DATABASE_URL=postgresql://ci:ci@localhost:5432/ci \
+            --env JWT_SECRET=ci-smoke-secret \
+            --env BREVO_API_KEY=ci-smoke-key \
+            expense-tracker-backend:ci
+          trap 'docker rm -f backend-ci-smoke >/dev/null 2>&1 || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/ | grep -Fq 'Hello World!'; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs backend-ci-smoke
+          exit 1
 
