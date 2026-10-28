@@ -10,6 +10,18 @@ on:
       status:
         required: true
         type: string
+      source_branch:
+        required: true
+        type: string
+      source_actor:
+        required: true
+        type: string
+      source_sha:
+        required: true
+        type: string
+      run_url:
+        required: true
+        type: string
 
     secrets:
       TELEGRAM_BOT_TOKEN:
@@ -28,6 +40,11 @@ jobs:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       PIPELINE_STATUS: ${{ inputs.status }}
+      PIPELINE_NAME: ${{ inputs.pipeline_name }}
+      SOURCE_BRANCH: ${{ inputs.source_branch }}
+      SOURCE_ACTOR: ${{ inputs.source_actor }}
+      SOURCE_SHA: ${{ inputs.source_sha }}
+      RUN_URL: ${{ inputs.run_url }}
 
     steps:
       - name: Send Telegram Notification
@@ -44,15 +61,15 @@ jobs:
             STATUS="FAILED"
           fi
 
-          MESSAGE="$ICON ${{ inputs.pipeline_name }}: $STATUS
+          MESSAGE="$ICON $PIPELINE_NAME: $STATUS
 
-          Repository: ${{ github.repository }}
-          Branch: ${{ github.ref_name }}
-          Actor: ${{ github.actor }}
+          Repository: $GITHUB_REPOSITORY
+          Branch: $SOURCE_BRANCH
+          Actor: $SOURCE_ACTOR
 
-          Commit: ${{ github.sha }}
+          Commit: $SOURCE_SHA
 
-          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          Run: $RUN_URL"
 
           curl --fail --silent --show-error \
             --request POST \

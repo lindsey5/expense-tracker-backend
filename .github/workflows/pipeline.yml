@@ -1,0 +1,53 @@
+name: Backend Pipeline
+
+on:
+  pull_request:
+    branches: [dev, main]
+    types: [opened, reopened]
+  push:
+    branches: [dev, main]
+  workflow_dispatch:
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  security:
+    name: Security
+    uses: ./.github/workflows/security.yml
+    secrets: inherit
+
+  cd:
+    name: CD
+    needs: [ci, security]
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.ci.result == 'success' &&
+      needs.security.result == 'success'
+    uses: ./.github/workflows/cd.yml
+    secrets: inherit
+
+  notify:
+    needs: [ci, security, cd]
+    if: always()
+    uses: ./.github/workflows/notify.yml
+    with:
+      pipeline_name: Backend CI/CD
+      status: ${{ contains(needs.*.result, 'failure') && 'failure' || contains(needs.*.result, 'cancelled') && 'cancelled' || 'success' }}
+      source_branch: ${{ github.head_ref || github.ref_name }}
+      source_actor: ${{ github.actor }}
+      source_sha: ${{ github.sha }}
+      run_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    secrets:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

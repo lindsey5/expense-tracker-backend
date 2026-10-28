@@ -1,19 +1,18 @@
-name: Deploy
+name: Backend CD
 
 on:
   workflow_call:
     secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
       SSH_HOST:
         required: true
       SSH_USER:
         required: true
       SSH_PRIVATE_KEY:
         required: true
-      DOCKERHUB_USERNAME:
-        required: true
-      DOCKERHUB_TOKEN:
-        required: true
-
       CI_DATABASE_URL:
         required: true
       CI_JWT_SECRET:
@@ -26,14 +25,39 @@ on:
         required: true
 
 jobs:
-  deploy:
-    name: Deploy to Azure Server
+  build:
+    name: Build image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/expense-tracker-app:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/expense-tracker-app:${{ github.sha }}
 
+  deploy:
+    name: Deploy to Azure Server
+    needs: [build]
+    if: needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Copy Docker Compose & Script to Server
         uses: appleboy/scp-action@master
         with:
@@ -42,13 +66,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: 'docker/docker-compose.yml,scripts/deploy.sh'
           target: '/home/${{ secrets.SSH_USER }}'
-
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.3
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/expense-tracker-app:latest
+          DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/expense-tracker-app:${{ github.sha }}
           DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
           JWT_SECRET: ${{ secrets.CI_JWT_SECRET }}
           JWT_EXPIRES_IN: ${{ secrets.CI_JWT_EXPIRES_IN }}
@@ -58,9 +81,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-
           envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,DOCKER_IMAGE,DATABASE_URL,JWT_SECRET,JWT_EXPIRES_IN,EMAIL_USER,BREVO_API_KEY
-
           script: |
             mkdir -p "$HOME/docker"
 
@@ -74,6 +95,5 @@ jobs:
             } > "$HOME/docker/.env"
 
             chmod 600 "$HOME/docker/.env"
-
             chmod +x "$HOME/scripts/deploy.sh"
             DEPLOY_DIR="$HOME/docker" "$HOME/scripts/deploy.sh"
