@@ -28,14 +28,14 @@ describe('UserService', () => {
     service = module.get<UserService>(UserService);
   });
 
-  it('returns a user-not-found message when the email is not registered', async () => {
+  it('returns a user-not-found message when no verified user matches', async () => {
     mockPrismaService.user.findUnique.mockResolvedValue(null);
 
     await expect(service.userLookup('missing@example.com')).resolves.toEqual({
       message: 'User not found.',
     });
     expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
-      where: { email: 'missing@example.com' },
+      where: { email: 'missing@example.com', isVerified: true },
     });
   });
 
