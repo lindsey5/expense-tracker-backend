@@ -7,6 +7,7 @@ const mockPrismaService = {
   transaction: {
     aggregate: jest.fn(),
   },
+  $queryRaw: jest.fn(),
 };
 
 describe('TransactionSummaryService', () => {
@@ -85,6 +86,31 @@ describe('TransactionSummaryService', () => {
       change: 0,
       hasPreviousMonth: false,
     });
+  });
+
+  it('groups monthly income and expenses into month totals', async () => {
+    mockPrismaService.$queryRaw.mockResolvedValue([
+      { month: 1, type: 'INCOME', total: '1000' },
+      { month: 1, type: 'EXPENSE', total: 250 },
+      { month: 2, type: 'EXPENSE', total: '75.5' },
+      { month: 3, type: 'INCOME', total: 500 },
+    ]);
+
+    await expect(
+      service.getMonthlyTransaction(2026, 'user-123'),
+    ).resolves.toEqual([
+      { month: 1, income: 1000, expense: 250 },
+      { month: 2, income: 0, expense: 75.5 },
+      { month: 3, income: 500, expense: 0 },
+    ]);
+  });
+
+  it('returns no monthly totals when there are no transactions', async () => {
+    mockPrismaService.$queryRaw.mockResolvedValue([]);
+
+    await expect(
+      service.getMonthlyTransaction(2026, 'user-123'),
+    ).resolves.toEqual([]);
   });
 
   it('loads when reflected constructor types fall back to Object', async () => {

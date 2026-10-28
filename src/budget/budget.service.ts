@@ -253,6 +253,7 @@ export class BudgetService {
     const totalBudget = monthlyBudget._sum.amount ?? 0;
     const spending = expenses._sum.amount ?? 0;
     const remaining = totalBudget - spending;
+    const finalRemaing = remaining < 0 ? 0 : remaining;
 
     const percentage = totalBudget > 0 ? (spending / totalBudget) * 100 : 0;
 
@@ -261,7 +262,7 @@ export class BudgetService {
       year: selectedYear,
       totalBudget,
       spending,
-      remaining,
+      remaining: finalRemaing,
       percentage,
     };
   }
