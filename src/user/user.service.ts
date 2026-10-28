@@ -9,6 +9,7 @@ export class UserService {
     const user = await this.prisma.user.findUnique({
       where: {
         email,
+        isVerified: true
       },
     });
 
